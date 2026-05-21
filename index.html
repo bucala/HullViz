@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ship Draft Calculator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+      background: #eef0f4;
+      color: #1c1c2e;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #0d2b4e 0%, #1a5276 100%);
+      color: white;
+      padding: 22px 32px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+    }
+    header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.3px; }
+    header p  { margin-top: 4px; font-size: 0.875rem; opacity: 0.75; }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 290px 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 18px;
+      align-items: start;
+    }
+
+    .results-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 1100px) {
+      .main-grid { grid-template-columns: 280px 1fr; }
+      .main-grid .card:nth-child(3) { grid-column: 1 / -1; }
+    }
+    @media (max-width: 720px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .main-grid .card:nth-child(3) { grid-column: auto; }
+      .results-bar { grid-template-columns: 1fr; }
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.07);
+    }
+
+    .card-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #7f8c9a;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f2f5;
+    }
+
+    /* ── Inputs ── */
+    .form-group { margin-bottom: 15px; }
+
+    .form-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #3a3a5c;
+      margin-bottom: 6px;
+    }
+    .form-label .unit { font-size: 0.78rem; font-weight: 400; color: #94a3b8; }
+
+    .form-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #1c1c2e;
+      background: white;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: #1a5276;
+      box-shadow: 0 0 0 3px rgba(26,82,118,0.12);
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+      height: 5px;
+      accent-color: #1a5276;
+      cursor: pointer;
+    }
+    .slider-display {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #1a5276;
+      min-width: 86px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .form-divider { height: 1px; background: #f0f2f5; margin: 16px 0; }
+
+    .btn-reset {
+      display: block;
+      width: 100%;
+      padding: 9px;
+      margin-top: 12px;
+      background: #f7f9fc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-reset:hover { background: #e8ecf2; color: #1c1c2e; }
+
+    /* ── Alerts ── */
+    .alert {
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.84rem;
+      display: none;
+      line-height: 1.5;
+    }
+    .alert-error   { background: #fff5f5; border: 1px solid #fc8181; color: #c53030; margin-bottom: 16px; }
+    .alert-warning { background: #fffbf0; border: 1px solid #f6ad55; color: #9c6a00; margin-top: 12px; }
+
+    /* ── Canvases ── */
+    canvas {
+      display: block;
+      width: 100%;
+      height: 280px;
+      border-radius: 8px;
+      background: #f7f9fc;
+    }
+
+    /* ── Result cards ── */
+    .result-card {
+      background: white;
+      border-radius: 14px;
+      padding: 22px 24px;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.07);
+      text-align: center;
+    }
+    .result-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+    .result-value {
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: #1c1c2e;
+      font-variant-numeric: tabular-nums;
+    }
+    .result-card.primary .result-value { font-size: 2.2rem; color: #1a5276; }
+    .result-sub { font-size: 0.78rem; color: #94a3b8; margin-top: 5px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Ship Draft Calculator</h1>
+  <p>Rectangular barge / pontoon model &mdash; Archimedes principle</p>
+</header>
+
+<div class="container">
+
+  <div id="alert-error" class="alert alert-error"></div>
+
+  <div class="main-grid">
+
+    <!-- ── Input Panel ── -->
+    <div class="card">
+      <div class="card-title">Hull &amp; Load Parameters</div>
+
+      <div class="form-group">
+        <div class="form-label">Length <span class="unit">L [m]</span></div>
+        <input class="form-input" type="number" id="input-L" value="50" min="0.1" step="0.5">
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Beam (Width) <span class="unit">B [m]</span></div>
+        <input class="form-input" type="number" id="input-B" value="10" min="0.1" step="0.5">
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Ship Weight <span class="unit">W<sub>ship</sub> [t]</span></div>
+        <input class="form-input" type="number" id="input-wShip" value="1000" min="0" step="10">
+      </div>
+
+      <div class="form-divider"></div>
+
+      <div class="form-group">
+        <div class="form-label">Cargo Weight <span class="unit">W<sub>cargo</sub> [t]</span></div>
+        <input class="form-input" type="number" id="input-wCargo" value="0" min="0" step="10">
+        <div class="slider-row">
+          <input type="range" id="slider-wCargo" min="0" max="5000" step="10" value="0">
+          <span class="slider-display" id="display-wCargo">0 t</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Water Density <span class="unit">&#961; [kg/m³]</span></div>
+        <input class="form-input" type="number" id="input-rho" value="1025" min="900" max="1200" step="1">
+        <div class="slider-row">
+          <input type="range" id="slider-rho" min="900" max="1100" step="1" value="1025">
+          <span class="slider-display" id="display-rho">1025 kg/m³</span>
+        </div>
+      </div>
+
+      <button class="btn-reset" id="btn-reset">&#8635; Reset to Defaults</button>
+      <div id="alert-warning" class="alert alert-warning"></div>
+    </div>
+
+    <!-- ── Hull Side View ── -->
+    <div class="card">
+      <div class="card-title">Hull Side View</div>
+      <canvas id="hull-canvas"></canvas>
+    </div>
+
+    <!-- ── Mass–Draft Graph ── -->
+    <div class="card">
+      <div class="card-title">Mass vs. Draft Curve</div>
+      <canvas id="graph-canvas"></canvas>
+    </div>
+
+  </div><!-- /.main-grid -->
+
+  <!-- ── Results Bar ── -->
+  <div class="results-bar">
+    <div class="result-card primary">
+      <div class="result-label">Draft T</div>
+      <div class="result-value" id="result-draft">—</div>
+      <div class="result-sub">waterline depth</div>
+    </div>
+    <div class="result-card">
+      <div class="result-label">Displacement Volume V</div>
+      <div class="result-value" id="result-volume">—</div>
+      <div class="result-sub">submerged volume</div>
+    </div>
+    <div class="result-card">
+      <div class="result-label">Total Weight</div>
+      <div class="result-value" id="result-weight">—</div>
+      <div class="result-sub">W<sub>ship</sub> + W<sub>cargo</sub></div>
+    </div>
+  </div>
+
+</div><!-- /.container -->
+
+<script>
+  // ─── Defaults ───────────────────────────────────────────────────────────────
+  const DEFAULTS = { L: 50, B: 10, wShip: 1000, wCargo: 0, rho: 1025 };
+
+  // ─── Read & validate all inputs ─────────────────────────────────────────────
+  function getInputs() {
+    const L      = parseFloat(document.getElementById('input-L').value);
+    const B      = parseFloat(document.getElementById('input-B').value);
+    const wShip  = parseFloat(document.getElementById('input-wShip').value);
+    const wCargo = parseFloat(document.getElementById('input-wCargo').value);
+    const rho    = parseFloat(document.getElementById('input-rho').value);
+
+    const errors = [];
+    if (!isFinite(L)      || L      <= 0) errors.push('Length L must be a positive number.');
+    if (!isFinite(B)      || B      <= 0) errors.push('Beam B must be a positive number.');
+    if (!isFinite(wShip)  || wShip  <  0) errors.push('Ship weight must be &ge; 0.');
+    if (!isFinite(wCargo) || wCargo <  0) errors.push('Cargo weight must be &ge; 0.');
+    if (!isFinite(rho)    || rho    <= 0) errors.push('Water density must be a positive number.');
+
+    return { L, B, wShip, wCargo, rho, errors, valid: errors.length === 0 };
+  }
+
+  // ─── Physics: T = W_kg / (rho * L * B) ─────────────────────────────────────
+  function computeDraft(inputs) {
+    const { L, B, wShip, wCargo, rho } = inputs;
+    const totalWeightTons = wShip + wCargo;
+    const totalWeightKg   = totalWeightTons * 1000;
+    const draft           = totalWeightKg / (rho * L * B);
+    const dispVolume      = L * B * draft;   // equals totalWeightKg / rho
+    return { draft, dispVolume, totalWeightTons, totalWeightKg };
+  }
+
+  // ─── Points for mass–draft line (0 … maxWeight) ─────────────────────────────
+  function computeMassDraftCurve(inputs, N = 25) {
+    const { L, B, rho } = inputs;
+    const { totalWeightTons } = computeDraft(inputs);
+
+    // Range: at least 2× current weight, enough to show T = 5 m, minimum 200 t
+    const weightFor5m = (rho * L * B * 5) / 1000;
+    const maxWeight   = Math.max(totalWeightTons * 2, 200, weightFor5m);
+
+    const points = [];
+    for (let i = 0; i <= N; i++) {
+      const mass = (maxWeight / N) * i;
+      points.push({ mass, draft: (mass * 1000) / (rho * L * B) });
+    }
+    return points;
+  }
+
+  // ─── Update numeric summary + warnings ──────────────────────────────────────
+  function updateResults(result, inputs) {
+    document.getElementById('result-draft').textContent  = result.draft.toFixed(3) + ' m';
+    document.getElementById('result-volume').textContent = result.dispVolume.toFixed(1) + ' m³';
+    document.getElementById('result-weight').textContent = result.totalWeightTons.toFixed(1) + ' t';
+
+    const warns = [];
+    if (result.draft > inputs.L) warns.push('&#9888; Draft exceeds ship length — unrealistic geometry.');
+    if (result.draft > 50)       warns.push('&#9888; Draft &gt; 50 m — unrealistically deep.');
+
+    const el = document.getElementById('alert-warning');
+    if (warns.length) { el.innerHTML = warns.join('<br>'); el.style.display = 'block'; }
+    else              { el.style.display = 'none'; }
+  }
+
+  // ─── Resolve canvas pixel size accounting for device pixel ratio ─────────────
+  function resizeCanvas(canvas) {
+    const dpr  = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    canvas.width  = rect.width  * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    return { ctx, W: rect.width, H: rect.height };
+  }
+
+  // ─── Hull side-view canvas ───────────────────────────────────────────────────
+  function drawHullPreview(result, inputs) {
+    const cv = resizeCanvas(document.getElementById('hull-canvas'));
+    if (!cv) return;
+    const { ctx, W, H } = cv;
+
+    const { draft }      = result;
+    const { L }          = inputs;
+
+    // Estimate a visible freeboard so the hull never fills the entire canvas
+    const freeboard = Math.max(draft * 0.30, 2.5);
+    const hullDepth = draft + freeboard;
+
+    const pad = { t: 32, r: 92, b: 28, l: 36 };
+    const dW  = W - pad.l - pad.r;
+    const dH  = H - pad.t - pad.b;
+    const sx  = dW / L;
+    const sy  = dH / hullDepth;
+
+    const hx          = pad.l;
+    const hTop        = pad.t;
+    const hW          = L   * sx;
+    const freeboardPx = freeboard * sy;
+    const draftPx     = draft     * sy;
+    const waterY      = hTop + freeboardPx;
+
+    // Water background
+    const waterGrad = ctx.createLinearGradient(0, waterY, 0, H);
+    waterGrad.addColorStop(0, 'rgba(100,181,246,0.40)');
+    waterGrad.addColorStop(1, 'rgba(21,101,192,0.20)');
+    ctx.fillStyle = waterGrad;
+    ctx.fillRect(0, waterY, W, H - waterY);
+
+    // Submerged hull section
+    const subGrad = ctx.createLinearGradient(hx, waterY, hx, waterY + draftPx);
+    subGrad.addColorStop(0, '#1565c0');
+    subGrad.addColorStop(1, '#0a2e6e');
+    ctx.fillStyle = subGrad;
+    ctx.fillRect(hx, waterY, hW, draftPx);
+
+    // Freeboard (above waterline) section
+    const fbGrad = ctx.createLinearGradient(hx, hTop, hx, waterY);
+    fbGrad.addColorStop(0, '#e0e5ea');
+    fbGrad.addColorStop(1, '#c5cbd4');
+    ctx.fillStyle = fbGrad;
+    ctx.fillRect(hx, hTop, hW, freeboardPx);
+
+    // Hull outline
+    ctx.strokeStyle = '#455a64';
+    ctx.lineWidth   = 1.8;
+    ctx.strokeRect(hx, hTop, hW, freeboardPx + draftPx);
+
+    // Waterline (dashed blue)
+    ctx.beginPath();
+    ctx.moveTo(0, waterY);
+    ctx.lineTo(W, waterY);
+    ctx.strokeStyle = '#2196f3';
+    ctx.lineWidth   = 2;
+    ctx.setLineDash([10, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // WL label
+    ctx.fillStyle = '#1976d2';
+    ctx.font      = 'bold 11px system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('WL', 5, waterY - 5);
+
+    // Draft annotation: bracket on the right
+    const ax  = hx + hW + 12;
+    const mid = waterY + draftPx / 2;
+    ctx.strokeStyle = '#1976d2';
+    ctx.lineWidth   = 1.5;
+    // vertical bar
+    ctx.beginPath(); ctx.moveTo(ax + 5, waterY); ctx.lineTo(ax + 5, waterY + draftPx); ctx.stroke();
+    // top tick
+    ctx.beginPath(); ctx.moveTo(ax + 1, waterY);          ctx.lineTo(ax + 9, waterY);          ctx.stroke();
+    // bottom tick
+    ctx.beginPath(); ctx.moveTo(ax + 1, waterY + draftPx); ctx.lineTo(ax + 9, waterY + draftPx); ctx.stroke();
+
+    ctx.fillStyle = '#1976d2';
+    ctx.font      = 'bold 11px system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('T = ' + draft.toFixed(2) + ' m', ax + 14, mid + 4);
+
+    // Length label at bottom
+    ctx.fillStyle = '#607d8b';
+    ctx.font      = '11px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('L = ' + L + ' m', hx + hW / 2, H - 8);
+
+    // "SIDE VIEW" watermark
+    ctx.fillStyle = 'rgba(0,0,0,0.10)';
+    ctx.font      = '10px system-ui, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('SIDE VIEW', W - 6, 14);
+  }
+
+  // ─── Mass–Draft line chart ───────────────────────────────────────────────────
+  function drawGraph(points, currentPoint) {
+    const cv = resizeCanvas(document.getElementById('graph-canvas'));
+    if (!cv) return;
+    const { ctx, W, H } = cv;
+
+    if (!points.length) return;
+
+    const maxMass  = points[points.length - 1].mass;
+    const maxDraft = Math.max(...points.map(p => p.draft), 0.01);
+
+    const pad = { t: 16, r: 24, b: 50, l: 58 };
+    const pW  = W - pad.l - pad.r;
+    const pH  = H - pad.t - pad.b;
+
+    const toX = m => pad.l + (m / maxMass)  * pW;
+    const toY = d => pad.t + pH - (d / maxDraft) * pH;
+
+    const N = 5;  // tick count
+
+    // Grid lines
+    ctx.lineWidth = 1;
+    for (let i = 1; i <= N; i++) {
+      ctx.strokeStyle = '#eff2f7';
+      ctx.beginPath();
+      ctx.moveTo(pad.l,      toY((maxDraft / N) * i)); ctx.lineTo(pad.l + pW, toY((maxDraft / N) * i)); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(toX((maxMass / N) * i), pad.t); ctx.lineTo(toX((maxMass / N) * i), pad.t + pH); ctx.stroke();
+    }
+
+    // Axes
+    ctx.strokeStyle = '#cbd5e0';
+    ctx.lineWidth   = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(pad.l, pad.t);
+    ctx.lineTo(pad.l, pad.t + pH);
+    ctx.lineTo(pad.l + pW, pad.t + pH);
+    ctx.stroke();
+
+    // Y ticks + labels
+    ctx.fillStyle   = '#6b7280';
+    ctx.font        = '11px system-ui, sans-serif';
+    ctx.textAlign   = 'right';
+    ctx.strokeStyle = '#bdc5d0';
+    ctx.lineWidth   = 1;
+    for (let i = 0; i <= N; i++) {
+      const d = (maxDraft / N) * i;
+      const y = toY(d);
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l - 5, y); ctx.stroke();
+      ctx.fillText(d.toFixed(1), pad.l - 8, y + 4);
+    }
+
+    // X ticks + labels
+    ctx.textAlign = 'center';
+    for (let i = 0; i <= N; i++) {
+      const m = (maxMass / N) * i;
+      const x = toX(m);
+      const yBase = pad.t + pH;
+      ctx.beginPath(); ctx.moveTo(x, yBase); ctx.lineTo(x, yBase + 5); ctx.stroke();
+      ctx.fillText(Math.round(m), x, yBase + 18);
+    }
+
+    // Axis labels
+    ctx.fillStyle = '#4b5563';
+    ctx.font      = '12px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Total Mass (t)', pad.l + pW / 2, H - 4);
+    ctx.save();
+    ctx.translate(13, pad.t + pH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Draft (m)', 0, 0);
+    ctx.restore();
+
+    // Mass–draft line with gradient
+    const lineGrad = ctx.createLinearGradient(pad.l, 0, pad.l + pW, 0);
+    lineGrad.addColorStop(0, '#90caf9');
+    lineGrad.addColorStop(1, '#1565c0');
+    ctx.beginPath();
+    ctx.strokeStyle = lineGrad;
+    ctx.lineWidth   = 2.5;
+    ctx.lineJoin    = 'round';
+    points.forEach((p, i) => {
+      i === 0 ? ctx.moveTo(toX(p.mass), toY(p.draft))
+              : ctx.lineTo(toX(p.mass), toY(p.draft));
+    });
+    ctx.stroke();
+
+    // Current operating point
+    if (currentPoint && isFinite(currentPoint.draft) && currentPoint.mass >= 0) {
+      const cx = toX(currentPoint.mass);
+      const cy = toY(currentPoint.draft);
+
+      // Crosshairs
+      ctx.strokeStyle = 'rgba(220,38,38,0.22)';
+      ctx.lineWidth   = 1;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(cx, pad.t); ctx.lineTo(cx, pad.t + pH);
+      ctx.moveTo(pad.l, cy); ctx.lineTo(pad.l + pW, cy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Dot
+      ctx.beginPath();
+      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+      ctx.fillStyle   = '#dc2626';
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth   = 2;
+      ctx.stroke();
+
+      // Label (flip side if near right edge)
+      const nearRight = cx > pad.l + pW * 0.65;
+      ctx.fillStyle  = '#dc2626';
+      ctx.font       = 'bold 10px system-ui, sans-serif';
+      ctx.textAlign  = nearRight ? 'right' : 'left';
+      ctx.fillText(
+        currentPoint.mass.toFixed(0) + ' t / ' + currentPoint.draft.toFixed(2) + ' m',
+        nearRight ? cx - 12 : cx + 12,
+        cy - 10
+      );
+    }
+  }
+
+  // ─── Sync a range slider with a number input and a display span ──────────────
+  function syncSlider(sliderId, inputId, displayId, format) {
+    const slider  = document.getElementById(sliderId);
+    const input   = document.getElementById(inputId);
+    const display = document.getElementById(displayId);
+
+    const refresh = v => { display.textContent = format(+v); };
+
+    slider.addEventListener('input', () => { input.value = slider.value; refresh(slider.value); updateAll(); });
+    input.addEventListener('input',  () => {
+      const v = parseFloat(input.value);
+      if (isFinite(v)) { slider.value = v; refresh(v); }
+      updateAll();
+    });
+
+    refresh(slider.value);
+  }
+
+  // ─── Master update: recalculate + redraw everything ─────────────────────────
+  function updateAll() {
+    const inputs  = getInputs();
+    const errorEl = document.getElementById('alert-error');
+
+    if (!inputs.valid) {
+      errorEl.innerHTML    = '&#9888; ' + inputs.errors.join('<br>&#9888; ');
+      errorEl.style.display = 'block';
+      return;
+    }
+    errorEl.style.display = 'none';
+
+    const result       = computeDraft(inputs);
+    updateResults(result, inputs);
+    drawHullPreview(result, inputs);
+
+    const points       = computeMassDraftCurve(inputs);
+    const currentPoint = { mass: result.totalWeightTons, draft: result.draft };
+    drawGraph(points, currentPoint);
+  }
+
+  // ─── Reset all inputs to defaults ───────────────────────────────────────────
+  function resetDefaults() {
+    document.getElementById('input-L').value       = DEFAULTS.L;
+    document.getElementById('input-B').value       = DEFAULTS.B;
+    document.getElementById('input-wShip').value   = DEFAULTS.wShip;
+    document.getElementById('input-wCargo').value  = DEFAULTS.wCargo;
+    document.getElementById('slider-wCargo').value = DEFAULTS.wCargo;
+    document.getElementById('input-rho').value     = DEFAULTS.rho;
+    document.getElementById('slider-rho').value    = DEFAULTS.rho;
+    document.getElementById('display-wCargo').textContent = DEFAULTS.wCargo + ' t';
+    document.getElementById('display-rho').textContent    = DEFAULTS.rho + ' kg/m³';
+    updateAll();
+  }
+
+  // ─── Wire up all event listeners ────────────────────────────────────────────
+  function setupEventListeners() {
+    ['input-L', 'input-B', 'input-wShip'].forEach(id =>
+      document.getElementById(id).addEventListener('input', updateAll)
+    );
+
+    syncSlider('slider-wCargo', 'input-wCargo', 'display-wCargo', v => v.toLocaleString() + ' t');
+    syncSlider('slider-rho',    'input-rho',    'display-rho',    v => v + ' kg/m³');
+
+    document.getElementById('btn-reset').addEventListener('click', resetDefaults);
+
+    // Redraw on resize so canvases stay sharp
+    window.addEventListener('resize', updateAll);
+  }
+
+  // ─── Bootstrap ──────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    setupEventListeners();
+    requestAnimationFrame(updateAll);  // wait one frame so CSS layout is computed
+  });
+</script>
+
+</body>
+</html>
