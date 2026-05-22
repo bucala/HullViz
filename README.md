@@ -116,7 +116,7 @@ Kalkulačka implementuje **obdĺžnikový pontón** (blokový koeficient C_B = 1
   ├─ S                  Globálny stav (lang, L, B, rho, wHull, wBat, wMotor, wBallast)
   ├─ I18N               SK/EN prekladové objekty
   ├─ compute()          Fyzika: V = W/ρ, T = V/(L·B), T_mm = T·10
-  ├─ drawBoat()         Canvas: RC speedboat silueta s vodnou čiarou
+  ├─ drawBoat()         Canvas: detailná silueta trajlera s vodnou čiarou
   ├─ drawGraph()        Canvas: krivka W/T s pracovným bodom
   ├─ updateResults()    Výsledkové karty (T, V, W)
   ├─ readState()        Čítanie hodnôt z DOM → S
@@ -142,6 +142,13 @@ Aplikácia je **single-file HTML** — žiadne závislosti, žiadny build krok.
 ---
 
 ## 📝 Changelog
+
+### v2.1.0 — 2026-05-22
+- **Detailná silueta rybárskeho trajlera** — kompletne prepísaná `drawBoat()` s realistickou geometriou
+- **Trup** — klasická sheer-line (vysoký prúd, nízky stred, zdvihnutá záď), deck break, 3-prúžkový boot-topping
+- **Superštruktura** — dvojposchodová riadiaca nadstavba (kabína 4 okná + mostík 5 okien s krídlami), radar, komín
+- **Sťažeň & takeláž** — kužeľový sťažeň, spreadery, forestay, backstay, shroudy, derrick bum, nav svetlo
+- **Detaily** — 8 mosadzných iluminátov, kotevný rumpál + retiazka, záchranný kruh, UK vlajka na záďovom sťažni, meno loďky
 
 ### v2.0.0 — 2026-05-22
 - **Kompletný prepis pre RC modely** — rozsah 8–120 cm dĺžka, výsledok v milimetroch
