@@ -177,6 +177,30 @@ Aplikácia je **single-file HTML** bez akýchkoľvek externých závislostí ale
 
 ---
 
+## 📝 Changelog
+
+### v1.2.0 — 2026-05-22
+- **Svetlý režim** — kompletný prepis na light theme (`#f0f4f8` pozadie, biele karty, modrý akcent `#1565c0`); tmavo-námorná hlavička zachovaná
+- **Oprava prepínača jednotiek** — tlačidlá Metric / Imperial teraz správne zvýrazňujú aktívny stav pri každom prepnutí aj pri štarte
+- **Oprava sliderov** — pridaný `user-select: none` na všetky obalové elementy sliderov; ťahanie jazdca už nevyberá okolný text
+- **Oprava proporcií lode** — nezávislé osi X / Y na canvas; loď teraz vždy vypĺňa výšku plátna bez ohľadu na pomer L/T (napr. 650:1)
+
+### v1.1.0 — 2026-05-21
+- **Vizuál vojnovej lode** — silueta korvetty na canvas (trup, mostík, komín, stožiar s radarom, kanón, ilumináty, antifouling)
+- **SK / EN prepínač** — okamžitá zmena všetkých textov cez I18N objekty
+- **Metrické / Imperiálne jednotky** — m ↔ ft, t ↔ LT, kg/m³ ↔ lb/ft³, m³ ↔ ft³; interná sústava vždy metrická
+- **Smart jazdce** — horizontálne pre L a B, vertikálne pre W_ship a W_cargo (vizuálna metafora nakladania)
+- **Akademická sekcia** — rozbaľovacia: SVG mapa pojmov + tabuľka všetkých vzorcov
+- **Kontextové tooltips** — ikona `i` pri každom parametri s fyzikálnym popisom a typickými hodnotami
+- **README** — vizuálne atraktívny popis projektu s ASCII layoutom, škálovacím sprievodcom pre RC modelárov a fyzikálnym modelom
+
+### v1.0.0 — 2026-05-20
+- Prvá verzia — jednoduchý kalkulátor ponoru (Archimédov zákon, `T = W_kg / (ρ × L × B)`)
+- Canvas vizualizácia trupu a graf M / T
+- Responzívny layout (3 stĺpce → 2 → 1)
+
+---
+
 ## 📖 Literatúra
 
 - Barras, C.B. — *Ship Stability for Masters and Mates*, Butterworth-Heinemann

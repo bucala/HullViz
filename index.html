@@ -3,456 +3,209 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HullViz – Kalkulátor Ponoru Lode</title>
+  <title>HullViz – Kalkulátor Ponoru</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f4f8; color: #1a2a3a; min-height: 100vh; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0d1b2a;
-      color: #cdd8e8;
-      min-height: 100vh;
-    }
-
-    /* ── Header ── */
     header {
-      background: linear-gradient(135deg, #071422 0%, #0f2a45 60%, #1a3a5c 100%);
+      background: linear-gradient(135deg, #071422 0%, #0f2a45 60%, #1a4060 100%);
       border-bottom: 1px solid #1e3a55;
-      padding: 16px 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
+      padding: 13px 22px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
     }
-    .header-title h1 { font-size: 1.55rem; font-weight: 700; color: #e8f0f8; letter-spacing: -0.2px; }
-    .header-title p  { margin-top: 3px; font-size: 0.8rem; color: #7a9ab8; }
-    .header-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .hdr-title h1 { font-size: 1.35rem; font-weight: 700; color: #e8f2ff; }
+    .hdr-title p  { font-size: 0.77rem; color: #6a9ab8; margin-top: 2px; }
+    .hdr-ctrls { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    .toggle-group {
-      display: flex;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid #1e3a55;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .toggle-group button {
-      padding: 6px 14px;
-      border: none;
-      background: transparent;
-      color: #7a9ab8;
-      font-size: 0.82rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.18s;
-      letter-spacing: 0.3px;
-    }
-    .toggle-group button.active {
-      background: #1a5f8a;
-      color: #e8f0f8;
-    }
-    .toggle-group button:hover:not(.active) { background: rgba(255,255,255,0.08); color: #b0cce0; }
+    .tg { display: flex; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14); border-radius: 7px; overflow: hidden; }
+    .tg button { padding: 5px 12px; border: none; background: transparent; color: rgba(255,255,255,0.45); font-size: 0.79rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+    .tg button.active { background: #1565c0; color: #fff; }
+    .tg button:hover:not(.active) { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.1); }
 
-    /* ── Layout ── */
-    .container { max-width: 1440px; margin: 0 auto; padding: 20px 18px; }
+    .container { max-width: 1440px; margin: 0 auto; padding: 16px 15px; }
 
-    .main-grid {
-      display: grid;
-      grid-template-columns: 300px 1fr 340px;
-      gap: 16px;
-      margin-bottom: 16px;
-      align-items: start;
-    }
-    @media (max-width: 1200px) {
-      .main-grid { grid-template-columns: 280px 1fr; }
-      .main-grid .graph-col { grid-column: 1 / -1; }
-    }
-    @media (max-width: 700px) {
-      .main-grid { grid-template-columns: 1fr; }
-      .results-bar { grid-template-columns: 1fr; }
-    }
+    .main-grid { display: grid; grid-template-columns: 286px 1fr 320px; gap: 13px; margin-bottom: 13px; align-items: start; }
+    @media (max-width: 1200px) { .main-grid { grid-template-columns: 270px 1fr; } .graph-col { grid-column: 1 / -1; } }
+    @media (max-width: 660px)  { .main-grid { grid-template-columns: 1fr; } .results-bar { grid-template-columns: 1fr; } }
+    .results-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
 
-    .results-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { background: #fff; border: 1px solid #d4e0ed; border-radius: 11px; padding: 15px; box-shadow: 0 2px 10px rgba(0,40,100,0.06); }
+    .card-title { font-size: 0.69rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #6a8aaa; margin-bottom: 13px; padding-bottom: 7px; border-bottom: 1px solid #e8f0f8; }
 
-    /* ── Cards ── */
-    .card {
-      background: #162032;
-      border: 1px solid #1e3550;
-      border-radius: 12px;
-      padding: 18px;
-    }
-    .card-title {
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #4a7a9b;
-      margin-bottom: 16px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #1e3550;
-    }
+    /* ── Inputs ── */
+    .h-param { margin-bottom: 11px; }
+    .p-label { display: flex; justify-content: space-between; align-items: center; font-size: 0.81rem; font-weight: 500; color: #3a5a7a; margin-bottom: 5px; user-select: none; -webkit-user-select: none; }
+    .p-label .utag { font-size: 0.72rem; color: #8aaccc; font-weight: 400; }
 
-    /* ── Inputs (horizontal params: L, B) ── */
-    .h-param { margin-bottom: 14px; }
-    .param-label {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.83rem;
-      font-weight: 500;
-      color: #a0bcd0;
-      margin-bottom: 6px;
-      cursor: default;
-    }
-    .param-label .unit-tag {
-      font-size: 0.75rem;
-      color: #4a7a9b;
-      font-weight: 400;
-    }
-    .param-label .info-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 16px; height: 16px;
-      background: #1e3550;
-      border-radius: 50%;
-      font-size: 0.65rem;
-      color: #4a9eff;
-      cursor: help;
-      flex-shrink: 0;
-      margin-left: 5px;
-      position: relative;
-    }
+    .info-icon { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; background: #e8f2ff; border: 1px solid #b8d4f0; border-radius: 50%; font-size: 0.61rem; color: #1565c0; cursor: help; flex-shrink: 0; margin-left: 4px; position: relative; }
+    .tip { display: none; position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%); width: 210px; background: #0d2a45; border: 1px solid #1e4a70; border-radius: 8px; padding: 9px 11px; font-size: 0.75rem; color: #b8d4ec; line-height: 1.5; z-index: 1000; pointer-events: none; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+    .tip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #1e4a70; }
+    .info-icon:hover .tip { display: block; }
 
-    /* Tooltip */
-    .tooltip-bubble {
-      display: none;
-      position: absolute;
-      bottom: calc(100% + 8px);
-      left: 50%;
-      transform: translateX(-50%);
-      width: 230px;
-      background: #0d1f33;
-      border: 1px solid #2a5070;
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 0.78rem;
-      color: #b0cce0;
-      line-height: 1.5;
-      z-index: 999;
-      pointer-events: none;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-    }
-    .tooltip-bubble::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      border: 6px solid transparent;
-      border-top-color: #2a5070;
-    }
-    .info-icon:hover .tooltip-bubble { display: block; }
+    .num-in { width: 100%; padding: 6px 10px; background: #f5f8fc; border: 1.5px solid #d0e0f0; border-radius: 7px; font-size: 0.86rem; color: #1a2a3a; margin-bottom: 6px; transition: border-color 0.2s; }
+    .num-in:focus { outline: none; border-color: #1565c0; box-shadow: 0 0 0 3px rgba(21,101,192,0.1); }
 
-    .number-input {
-      width: 100%;
-      padding: 7px 10px;
-      background: #0d1b2a;
-      border: 1.5px solid #1e3550;
-      border-radius: 7px;
-      font-size: 0.88rem;
-      color: #cdd8e8;
-      transition: border-color 0.2s;
-      margin-bottom: 7px;
-    }
-    .number-input:focus { outline: none; border-color: #1a5f8a; box-shadow: 0 0 0 3px rgba(26,95,138,0.2); }
+    /* Horizontal slider row — user-select:none prevents text highlight while dragging */
+    .h-row { display: flex; align-items: center; gap: 8px; user-select: none; -webkit-user-select: none; }
+    .h-row input[type=range] { flex: 1; height: 4px; accent-color: #1565c0; cursor: pointer; }
+    .sval { font-size: 0.76rem; font-weight: 700; color: #1565c0; min-width: 70px; text-align: right; white-space: nowrap; }
 
-    /* Horizontal slider row */
-    .h-slider-row { display: flex; align-items: center; gap: 8px; }
-    .h-slider-row input[type=range] {
-      flex: 1;
-      height: 4px;
-      accent-color: #3b9eff;
-      cursor: pointer;
-    }
-    .slider-val {
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #3b9eff;
-      min-width: 72px;
-      text-align: right;
-      white-space: nowrap;
-    }
+    /* Vertical weight sliders */
+    .wdiv { height: 1px; background: #e8f0f8; margin: 11px 0 9px; }
+    .weights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .wcol { display: flex; flex-direction: column; align-items: center; gap: 4px; user-select: none; -webkit-user-select: none; }
+    .wcol .p-label { font-size: 0.76rem; text-align: center; justify-content: center; gap: 3px; }
+    .v-wrap { position: relative; width: 30px; height: 115px; display: flex; align-items: center; justify-content: center; }
+    .v-wrap input[type=range] { position: absolute; width: 115px; transform: rotate(-90deg); transform-origin: center; height: 4px; accent-color: #1565c0; cursor: ns-resize; }
+    .wval { font-size: 0.79rem; font-weight: 700; color: #1565c0; white-space: nowrap; }
+    .wnum { width: 100%; padding: 4px 6px; text-align: center; background: #f5f8fc; border: 1.5px solid #d0e0f0; border-radius: 6px; font-size: 0.79rem; color: #1a2a3a; }
+    .wnum:focus { outline: none; border-color: #1565c0; }
 
-    /* ── Vertical weight sliders ── */
-    .weights-section { margin-top: 4px; }
-    .weights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+    .rho-row { margin-top: 11px; padding-top: 11px; border-top: 1px solid #e8f0f8; }
 
-    .weight-col {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-    }
-    .weight-col .param-label { font-size: 0.78rem; text-align: center; justify-content: center; gap: 4px; margin-bottom: 0; }
+    .btn-rst { display: block; width: 100%; margin-top: 11px; padding: 7px; background: #f5f8fc; border: 1.5px solid #d0e0f0; border-radius: 7px; font-size: 0.80rem; font-weight: 600; color: #6a8aaa; cursor: pointer; transition: all 0.18s; }
+    .btn-rst:hover { background: #e8f2ff; border-color: #aad0f0; color: #1565c0; }
 
-    .v-slider-wrap {
-      position: relative;
-      width: 32px;
-      height: 130px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .v-slider-wrap input[type=range] {
-      position: absolute;
-      width: 130px;
-      height: 5px;
-      transform: rotate(-90deg);
-      transform-origin: center;
-      accent-color: #3b9eff;
-      cursor: ns-resize;
-    }
+    .alert { border-radius: 8px; padding: 8px 12px; font-size: 0.80rem; display: none; line-height: 1.5; }
+    .alert-err  { background: #fff0f0; border: 1px solid #f0a0a0; color: #c03030; margin-bottom: 11px; }
+    .alert-warn { background: #fffbf0; border: 1px solid #f0d080; color: #a06000; margin-top: 8px; }
 
-    .weight-val {
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #3b9eff;
-      text-align: center;
-      white-space: nowrap;
-    }
-    .weight-num-input {
-      width: 100%;
-      padding: 5px 8px;
-      background: #0d1b2a;
-      border: 1.5px solid #1e3550;
-      border-radius: 6px;
-      font-size: 0.82rem;
-      color: #cdd8e8;
-      text-align: center;
-    }
-    .weight-num-input:focus { outline: none; border-color: #1a5f8a; }
+    canvas { display: block; width: 100%; height: 265px; border-radius: 8px; }
+    #ship-canvas  { background: #c8e8ff; }
+    #graph-canvas { background: #f8fbff; border: 1px solid #deeaf8; }
 
-    /* rho row */
-    .rho-section { margin-top: 14px; border-top: 1px solid #1e3550; padding-top: 14px; }
+    .result-card { background: #fff; border: 1px solid #d4e0ed; border-radius: 11px; padding: 16px 18px; text-align: center; box-shadow: 0 2px 10px rgba(0,40,100,0.06); }
+    .rl { font-size: 0.69rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #6a8aaa; margin-bottom: 5px; }
+    .rv { font-size: 1.55rem; font-weight: 700; color: #1a2a3a; font-variant-numeric: tabular-nums; }
+    .result-card.primary .rv { font-size: 2rem; color: #1565c0; }
+    .rs { font-size: 0.73rem; color: #8aaccc; margin-top: 3px; }
 
-    /* reset button */
-    .btn-reset {
-      display: block; width: 100%;
-      margin-top: 14px; padding: 8px;
-      background: #0d1b2a; border: 1.5px solid #1e3550;
-      border-radius: 7px; font-size: 0.82rem; font-weight: 600;
-      color: #4a7a9b; cursor: pointer; transition: all 0.2s;
-    }
-    .btn-reset:hover { background: #1e3550; color: #cdd8e8; }
+    .academic { margin-top: 13px; background: #fff; border: 1px solid #d4e0ed; border-radius: 11px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,40,100,0.06); }
+    .ac-hdr { display: flex; align-items: center; justify-content: space-between; padding: 12px 17px; cursor: pointer; user-select: none; -webkit-user-select: none; border-bottom: 1px solid #e8f0f8; }
+    .ac-hdr h2 { font-size: 0.69rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #6a8aaa; }
+    .ac-arr { color: #1565c0; font-size: 0.88rem; transition: transform 0.3s; }
+    .ac-hdr.open .ac-arr { transform: rotate(180deg); }
+    .ac-body { display: none; padding: 17px; }
+    .ac-body.open { display: block; }
+    .ac-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 860px) { .ac-grid { grid-template-columns: 1fr; } }
+    .ac-sub { font-size: 0.69rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #6a8aaa; margin-bottom: 11px; padding-bottom: 5px; border-bottom: 1px solid #e8f0f8; }
+    .cscroll { overflow-x: auto; }
+    .cscroll svg { min-width: 450px; }
+    .ftbl { width: 100%; border-collapse: collapse; font-size: 0.80rem; }
+    .ftbl th { background: #f5f8fc; color: #5a7a9a; padding: 7px 9px; text-align: left; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid #deeaf8; }
+    .ftbl td { padding: 7px 9px; border-bottom: 1px solid #f0f4f8; color: #3a5a7a; vertical-align: middle; }
+    .ftbl tr:last-child td { border-bottom: none; }
+    .fe { font-family: 'Courier New', monospace; color: #0a7a50; font-size: 0.84rem; }
+    .fd { color: #8aaccc; font-size: 0.74rem; }
+    .ac-note { margin-top: 13px; padding: 9px 12px; background: #f0f6ff; border-left: 3px solid #1565c0; border-radius: 0 7px 7px 0; font-size: 0.78rem; color: #4a6a8a; line-height: 1.5; }
 
-    /* ── Alerts ── */
-    .alert { border-radius: 8px; padding: 9px 13px; font-size: 0.82rem; display: none; line-height: 1.5; margin-bottom: 14px; }
-    .alert-error   { background: #2a0f0f; border: 1px solid #7b2d2d; color: #f08080; }
-    .alert-warning { background: #2a1f00; border: 1px solid #7a5a00; color: #f0c060; margin-top: 10px; margin-bottom: 0; }
-
-    /* ── Canvases ── */
-    canvas {
-      display: block; width: 100%; height: 280px;
-      border-radius: 8px; background: #0a1520;
-    }
-
-    /* ── Result cards ── */
-    .result-card {
-      background: #162032; border: 1px solid #1e3550;
-      border-radius: 12px; padding: 18px 20px; text-align: center;
-    }
-    .result-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #4a7a9b; margin-bottom: 6px; }
-    .result-value { font-size: 1.65rem; font-weight: 700; color: #cdd8e8; font-variant-numeric: tabular-nums; }
-    .result-card.primary .result-value { font-size: 2.1rem; color: #3b9eff; }
-    .result-sub { font-size: 0.76rem; color: #4a7a9b; margin-top: 4px; }
-
-    /* ── Academic section ── */
-    .academic-section {
-      margin-top: 20px;
-      background: #162032;
-      border: 1px solid #1e3550;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    .academic-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 20px;
-      cursor: pointer;
-      border-bottom: 1px solid #1e3550;
-      user-select: none;
-    }
-    .academic-header h2 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #4a7a9b; }
-    .academic-header .toggle-arrow { color: #3b9eff; font-size: 1rem; transition: transform 0.3s; }
-    .academic-header.open .toggle-arrow { transform: rotate(180deg); }
-
-    .academic-body { display: none; padding: 20px; }
-    .academic-body.open { display: block; }
-
-    .academic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    @media (max-width: 900px) { .academic-grid { grid-template-columns: 1fr; } }
-
-    .academic-sub-title {
-      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.8px; color: #4a7a9b; margin-bottom: 14px;
-      padding-bottom: 6px; border-bottom: 1px solid #1e3550;
-    }
-
-    /* Concept map SVG container */
-    .concept-map-wrap { overflow-x: auto; }
-    .concept-map-wrap svg { min-width: 480px; }
-
-    /* Formulas table */
-    .formula-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
-    .formula-table th {
-      background: #0d1b2a; color: #4a9eff;
-      padding: 8px 12px; text-align: left; font-size: 0.72rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.5px;
-      border-bottom: 1px solid #1e3550;
-    }
-    .formula-table td { padding: 9px 12px; border-bottom: 1px solid #1a2d45; color: #b0cce0; vertical-align: middle; }
-    .formula-table tr:last-child td { border-bottom: none; }
-    .formula-table .formula-expr {
-      font-family: 'Courier New', monospace; font-size: 0.88rem; color: #4adfb0;
-    }
-    .formula-table .formula-desc { color: #7a9ab8; font-size: 0.78rem; }
-
-    .academic-note {
-      margin-top: 16px; padding: 12px 14px;
-      background: #0d1b2a; border-left: 3px solid #3b9eff;
-      border-radius: 0 8px 8px 0; font-size: 0.8rem; color: #7a9ab8; line-height: 1.5;
-    }
-
-    /* Footer */
-    footer { text-align: center; padding: 20px; font-size: 0.75rem; color: #2a4a6a; margin-top: 8px; }
-
-    /* ── Scrollbar ── */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0d1b2a; }
-    ::-webkit-scrollbar-thumb { background: #1e3550; border-radius: 3px; }
+    footer { text-align: center; padding: 16px; font-size: 0.72rem; color: #8aaccc; }
   </style>
 </head>
 <body>
 
-<!-- ══ HEADER ══════════════════════════════════════════════════════════════ -->
 <header>
-  <div class="header-title">
+  <div class="hdr-title">
     <h1 id="hdr-title">HullViz – Kalkulátor Ponoru Lode</h1>
     <p id="hdr-sub">Obdĺžnikový model pontónu · Archimédov zákon · Modelárske použitie</p>
   </div>
-  <div class="header-controls">
-    <div class="toggle-group" id="lang-toggle">
-      <button onclick="setLang('sk')" class="active" id="btn-sk">SK</button>
-      <button onclick="setLang('en')" id="btn-en">EN</button>
+  <div class="hdr-ctrls">
+    <div class="tg">
+      <button id="btn-sk" onclick="setLang('sk')">SK</button>
+      <button id="btn-en" onclick="setLang('en')">EN</button>
     </div>
-    <div class="toggle-group" id="unit-toggle">
-      <button onclick="setUnits('metric')" class="active" id="btn-metric" data-i18n="metricBtn">Metrické</button>
-      <button onclick="setUnits('imperial')" id="btn-imperial" data-i18n="imperialBtn">Imperiálne</button>
+    <div class="tg">
+      <button id="btn-m" onclick="setUnits('metric')">Metrické</button>
+      <button id="btn-i" onclick="setUnits('imperial')">Imperiálne</button>
     </div>
   </div>
 </header>
 
 <div class="container">
+  <div id="alert-err" class="alert alert-err"></div>
 
-  <div id="alert-error" class="alert alert-error"></div>
-
-  <!-- ══ MAIN GRID ══════════════════════════════════════════════════════════ -->
   <div class="main-grid">
 
-    <!-- ── Input Panel ── -->
+    <!-- ── Inputs ── -->
     <div class="card">
-      <div class="card-title" id="inputs-title">Parametre trupu a zaťaženia</div>
+      <div class="card-title" data-i18n="inputsTitle">Parametre trupu a zaťaženia</div>
 
-      <!-- L: horizontal -->
       <div class="h-param">
-        <div class="param-label">
+        <div class="p-label">
           <span data-i18n="labelL">Dĺžka lode</span>
-          <span class="info-icon">i
-            <span class="tooltip-bubble" id="tip-L">Dĺžka lode medzi kolmicami (LBP). Určuje plochu vodovody — spolu so šírkou definuje L×B základ pre výpočet ponoru.</span>
-          </span>
-          <span class="unit-tag" id="unit-L">m</span>
+          <span class="info-icon">i<span class="tip" id="tip-L"></span></span>
+          <span class="utag" id="unit-L">m</span>
         </div>
-        <input class="number-input" type="number" id="input-L" value="50" min="0.1" step="0.5">
-        <div class="h-slider-row">
+        <input class="num-in" type="number" id="input-L" value="50">
+        <div class="h-row">
           <input type="range" id="slider-L" min="5" max="300" step="0.5" value="50">
-          <span class="slider-val" id="disp-L">50 m</span>
+          <span class="sval" id="disp-L">50 m</span>
         </div>
       </div>
 
-      <!-- B: horizontal -->
       <div class="h-param">
-        <div class="param-label">
+        <div class="p-label">
           <span data-i18n="labelB">Šírka trupu (Bok)</span>
-          <span class="info-icon">i
-            <span class="tooltip-bubble" id="tip-B">Maximálna šírka trupu lode. Spolu s dĺžkou definuje plochu vodovody A_WP = L × B. Väčšia šírka → menší ponor.</span>
-          </span>
-          <span class="unit-tag" id="unit-B">m</span>
+          <span class="info-icon">i<span class="tip" id="tip-B"></span></span>
+          <span class="utag" id="unit-B">m</span>
         </div>
-        <input class="number-input" type="number" id="input-B" value="10" min="0.1" step="0.5">
-        <div class="h-slider-row">
+        <input class="num-in" type="number" id="input-B" value="10">
+        <div class="h-row">
           <input type="range" id="slider-B" min="1" max="80" step="0.5" value="10">
-          <span class="slider-val" id="disp-B">10 m</span>
+          <span class="sval" id="disp-B">10 m</span>
         </div>
       </div>
 
-      <!-- Weights: vertical sliders -->
-      <div class="weights-section">
-        <div class="card-title" style="margin-top:8px;" data-i18n="weightsTitle">Záťaž (vertikálne)</div>
-        <div class="weights-grid">
-          <!-- W_ship -->
-          <div class="weight-col">
-            <div class="param-label">
-              <span data-i18n="labelWShip">Hmotnosť lode</span>
-              <span class="info-icon">i
-                <span class="tooltip-bubble" id="tip-ws" style="left:auto;right:0;transform:none;">Prázdna hmotnosť (lightship): trup, pohon, výstroj, pevné zariadenia. Nemení sa nakládkou — je to konštanta lode.</span>
-              </span>
-            </div>
-            <div class="v-slider-wrap">
-              <input type="range" id="slider-wShip" min="0" max="10000" step="10" value="1000">
-            </div>
-            <span class="weight-val" id="disp-wShip">1000 t</span>
-            <input class="weight-num-input" type="number" id="input-wShip" value="1000" min="0" step="10">
+      <div class="wdiv"></div>
+      <div class="card-title" style="margin-bottom:8px;" data-i18n="weightsTitle">Záťaž (vertikálne)</div>
+
+      <div class="weights-grid">
+        <div class="wcol">
+          <div class="p-label">
+            <span data-i18n="labelWShip">Hmotnosť lode</span>
+            <span class="info-icon">i<span class="tip" id="tip-ws"></span></span>
           </div>
-          <!-- W_cargo -->
-          <div class="weight-col">
-            <div class="param-label">
-              <span data-i18n="labelWCargo">Náklad</span>
-              <span class="info-icon">i
-                <span class="tooltip-bubble" id="tip-wc" style="left:auto;right:0;transform:none;">Premenlivá záťaž: náklad, zásoby, palivo, posádka. Posúvanie tohto jazdca simuluje nakladanie lode — ponor sa mení okamžite.</span>
-              </span>
-            </div>
-            <div class="v-slider-wrap">
-              <input type="range" id="slider-wCargo" min="0" max="5000" step="10" value="0">
-            </div>
-            <span class="weight-val" id="disp-wCargo">0 t</span>
-            <input class="weight-num-input" type="number" id="input-wCargo" value="0" min="0" step="10">
+          <div class="v-wrap">
+            <input type="range" id="slider-wShip" min="0" max="10000" step="10" value="1000">
           </div>
+          <span class="wval" id="disp-wShip">1000 t</span>
+          <input class="wnum" type="number" id="input-wShip" value="1000">
+        </div>
+        <div class="wcol">
+          <div class="p-label">
+            <span data-i18n="labelWCargo">Náklad</span>
+            <span class="info-icon">i<span class="tip" id="tip-wc"></span></span>
+          </div>
+          <div class="v-wrap">
+            <input type="range" id="slider-wCargo" min="0" max="5000" step="10" value="0">
+          </div>
+          <span class="wval" id="disp-wCargo">0 t</span>
+          <input class="wnum" type="number" id="input-wCargo" value="0">
         </div>
       </div>
 
-      <!-- rho: horizontal -->
-      <div class="rho-section">
-        <div class="param-label">
+      <div class="rho-row">
+        <div class="p-label">
           <span data-i18n="labelRho">Hustota vody</span>
-          <span class="info-icon">i
-            <span class="tooltip-bubble" id="tip-rho">Hustota závisí od slanosti a teploty. Sladká voda: 1000 kg/m³, morská: 1025, Mŕtve more: ~1240. Vyššia hustota → menší ponor.</span>
-          </span>
-          <span class="unit-tag" id="unit-rho">kg/m³</span>
+          <span class="info-icon">i<span class="tip" id="tip-rho"></span></span>
+          <span class="utag" id="unit-rho">kg/m³</span>
         </div>
-        <input class="number-input" type="number" id="input-rho" value="1025" min="900" max="1300" step="1">
-        <div class="h-slider-row">
+        <input class="num-in" type="number" id="input-rho" value="1025">
+        <div class="h-row">
           <input type="range" id="slider-rho" min="900" max="1100" step="1" value="1025">
-          <span class="slider-val" id="disp-rho">1025 kg/m³</span>
+          <span class="sval" id="disp-rho">1025 kg/m³</span>
         </div>
       </div>
 
-      <button class="btn-reset" id="btn-reset" onclick="resetDefaults()">&#8635; <span data-i18n="resetBtn">Obnoviť predvolené</span></button>
-      <div id="alert-warning" class="alert alert-warning"></div>
+      <button class="btn-rst" onclick="resetDefaults()">&#8635; <span data-i18n="resetBtn">Obnoviť predvolené</span></button>
+      <div id="alert-warn" class="alert alert-warn"></div>
     </div>
 
-    <!-- ── Ship Visual ── -->
+    <!-- ── Ship canvas ── -->
     <div class="card">
-      <div class="card-title" id="visual-title" data-i18n="visualTitle">Pohľad zboku – vojnová loď</div>
+      <div class="card-title" data-i18n="visualTitle">Pohľad zboku – vojnová loď</div>
       <canvas id="ship-canvas"></canvas>
     </div>
 
@@ -461,302 +214,181 @@
       <div class="card-title" data-i18n="graphTitle">Závislosť hmotnosť / ponor</div>
       <canvas id="graph-canvas"></canvas>
     </div>
+  </div>
 
-  </div><!-- /.main-grid -->
-
-  <!-- ══ RESULTS BAR ══════════════════════════════════════════════════════ -->
+  <!-- Results -->
   <div class="results-bar">
     <div class="result-card primary">
-      <div class="result-label" data-i18n="resDraft">Ponor T</div>
-      <div class="result-value" id="result-draft">—</div>
-      <div class="result-sub" data-i18n="resDraftSub">hĺbka vodovody</div>
+      <div class="rl" data-i18n="resDraft">Ponor T</div>
+      <div class="rv" id="res-draft">—</div>
+      <div class="rs" data-i18n="resDraftSub">hĺbka vodovody</div>
     </div>
     <div class="result-card">
-      <div class="result-label" data-i18n="resVolume">Objem výtlaku V</div>
-      <div class="result-value" id="result-volume">—</div>
-      <div class="result-sub" data-i18n="resVolumeSub">ponorený objem</div>
+      <div class="rl" data-i18n="resVol">Objem výtlaku V</div>
+      <div class="rv" id="res-vol">—</div>
+      <div class="rs" data-i18n="resVolSub">ponorený objem</div>
     </div>
     <div class="result-card">
-      <div class="result-label" data-i18n="resWeight">Celková hmotnosť</div>
-      <div class="result-value" id="result-weight">—</div>
-      <div class="result-sub" data-i18n="resWeightSub">loď + náklad</div>
+      <div class="rl" data-i18n="resWt">Celková hmotnosť</div>
+      <div class="rv" id="res-wt">—</div>
+      <div class="rs" data-i18n="resWtSub">loď + náklad</div>
     </div>
   </div>
 
-  <!-- ══ ACADEMIC SECTION ════════════════════════════════════════════════ -->
-  <div class="academic-section">
-    <div class="academic-header" id="academic-header" onclick="toggleAcademic()">
+  <!-- Academic -->
+  <div class="academic">
+    <div class="ac-hdr" id="ac-hdr" onclick="toggleAc()">
       <h2 data-i18n="academicTitle">Akademická sekcia</h2>
-      <span class="toggle-arrow">▼</span>
+      <span class="ac-arr">▼</span>
     </div>
-    <div class="academic-body" id="academic-body">
-      <div class="academic-grid">
-
-        <!-- Concept Map -->
+    <div class="ac-body" id="ac-body">
+      <div class="ac-grid">
         <div>
-          <div class="academic-sub-title" data-i18n="conceptMapTitle">Mapa pojmov</div>
-          <div class="concept-map-wrap">
-            <svg id="concept-svg" viewBox="0 0 620 220" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:system-ui,sans-serif;">
-              <!-- arrows / edges -->
-              <defs>
-                <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-                  <polygon points="0 0,8 3,0 6" fill="#3b6a8a"/>
-                </marker>
-              </defs>
-              <!-- W_ship → W_total -->
-              <line x1="128" y1="42" x2="192" y2="78" stroke="#3b6a8a" stroke-width="1.5" marker-end="url(#arr)"/>
-              <!-- W_cargo → W_total -->
-              <line x1="128" y1="122" x2="192" y2="98" stroke="#3b6a8a" stroke-width="1.5" marker-end="url(#arr)"/>
-              <!-- W_total → V -->
-              <line x1="312" y1="88" x2="358" y2="88" stroke="#3b6a8a" stroke-width="1.5" marker-end="url(#arr)"/>
-              <!-- rho → V (from bottom) -->
-              <line x1="412" y1="168" x2="412" y2="118" stroke="#3b6a8a" stroke-width="1.5" marker-end="url(#arr)"/>
-              <!-- V → T -->
-              <line x1="478" y1="88" x2="528" y2="88" stroke="#3b9eff" stroke-width="2" marker-end="url(#arr)"/>
-              <!-- L → T (from bottom) -->
-              <line x1="548" y1="152" x2="556" y2="120" stroke="#3b6a8a" stroke-width="1.5" marker-end="url(#arr)"/>
-              <!-- B → T (from bottom) -->
-              <line x1="590" y1="152" x2="574" y2="120" stroke="#3b6a8a" stroke-width="1.5" marker-end="url(#arr)"/>
-
-              <!-- W_ship box -->
-              <rect x="10" y="18" width="118" height="46" rx="8" fill="#0d1b2a" stroke="#2a5070" stroke-width="1.5"/>
-              <text x="69" y="37" text-anchor="middle" fill="#4adfb0" font-size="13" font-weight="700">W_ship</text>
-              <text x="69" y="54" text-anchor="middle" fill="#6a9ab8" font-size="10" id="cm-wship">Hmotnosť lode</text>
-
-              <!-- W_cargo box -->
-              <rect x="10" y="98" width="118" height="46" rx="8" fill="#0d1b2a" stroke="#2a5070" stroke-width="1.5"/>
-              <text x="69" y="117" text-anchor="middle" fill="#4adfb0" font-size="13" font-weight="700">W_cargo</text>
-              <text x="69" y="134" text-anchor="middle" fill="#6a9ab8" font-size="10" id="cm-wcargo">Náklad</text>
-
-              <!-- plus sign -->
-              <text x="164" y="92" text-anchor="middle" fill="#7ab8d8" font-size="16" font-weight="700">+</text>
-
-              <!-- W_total box -->
-              <rect x="192" y="62" width="120" height="46" rx="8" fill="#0d1b2a" stroke="#3b7aaa" stroke-width="1.5"/>
-              <text x="252" y="81" text-anchor="middle" fill="#4adfb0" font-size="12" font-weight="700">W_total</text>
-              <text x="252" y="97" text-anchor="middle" fill="#6a9ab8" font-size="10" id="cm-wtotal">= W_ship + W_cargo</text>
-
-              <!-- rho box -->
-              <rect x="362" y="148" width="100" height="42" rx="8" fill="#0d1b2a" stroke="#2a5070" stroke-width="1.5"/>
-              <text x="412" y="167" text-anchor="middle" fill="#f0c060" font-size="14" font-weight="700">ρ</text>
-              <text x="412" y="183" text-anchor="middle" fill="#6a9ab8" font-size="10" id="cm-rho">Hustota vody</text>
-
-              <!-- V box -->
-              <rect x="358" y="62" width="120" height="46" rx="8" fill="#0d1b2a" stroke="#3b7aaa" stroke-width="1.5"/>
-              <text x="418" y="81" text-anchor="middle" fill="#4adfb0" font-size="12" font-weight="700">V</text>
-              <text x="418" y="97" text-anchor="middle" fill="#6a9ab8" font-size="10" id="cm-volume">= W_kg / ρ</text>
-
-              <!-- L box -->
-              <rect x="528" y="152" width="44" height="38" rx="7" fill="#0d1b2a" stroke="#2a5070" stroke-width="1.5"/>
-              <text x="550" y="170" text-anchor="middle" fill="#f0c060" font-size="13" font-weight="700">L</text>
-              <text x="550" y="184" text-anchor="middle" fill="#6a9ab8" font-size="9">Dĺžka</text>
-
-              <!-- B box -->
-              <rect x="577" y="152" width="40" height="38" rx="7" fill="#0d1b2a" stroke="#2a5070" stroke-width="1.5"/>
-              <text x="597" y="170" text-anchor="middle" fill="#f0c060" font-size="13" font-weight="700">B</text>
-              <text x="597" y="184" text-anchor="middle" fill="#6a9ab8" font-size="9">Šírka</text>
-
-              <!-- × sign between L and B -->
-              <text x="570" y="176" text-anchor="middle" fill="#7ab8d8" font-size="14">·</text>
-
-              <!-- T (result) box -->
-              <rect x="528" y="62" width="88" height="46" rx="8" fill="#0d2040" stroke="#3b9eff" stroke-width="2"/>
-              <text x="572" y="81" text-anchor="middle" fill="#3b9eff" font-size="16" font-weight="700">T</text>
-              <text x="572" y="97" text-anchor="middle" fill="#6a9ab8" font-size="10" id="cm-draft">PONOR</text>
+          <div class="ac-sub" data-i18n="conceptMapTitle">Mapa pojmov</div>
+          <div class="cscroll">
+            <svg viewBox="0 0 620 210" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:system-ui,sans-serif;">
+              <defs><marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#7ab0d0"/></marker></defs>
+              <line x1="128" y1="42"  x2="192" y2="78"  stroke="#7ab0d0" stroke-width="1.5" marker-end="url(#arr)"/>
+              <line x1="128" y1="122" x2="192" y2="98"  stroke="#7ab0d0" stroke-width="1.5" marker-end="url(#arr)"/>
+              <line x1="312" y1="88"  x2="358" y2="88"  stroke="#7ab0d0" stroke-width="1.5" marker-end="url(#arr)"/>
+              <line x1="412" y1="162" x2="412" y2="118" stroke="#7ab0d0" stroke-width="1.5" marker-end="url(#arr)"/>
+              <line x1="478" y1="88"  x2="528" y2="88"  stroke="#1565c0" stroke-width="2"   marker-end="url(#arr)"/>
+              <line x1="548" y1="150" x2="556" y2="120" stroke="#7ab0d0" stroke-width="1.5" marker-end="url(#arr)"/>
+              <line x1="590" y1="150" x2="574" y2="120" stroke="#7ab0d0" stroke-width="1.5" marker-end="url(#arr)"/>
+              <rect x="10"  y="18"  width="118" height="46" rx="8" fill="#f0f6ff" stroke="#c0d8f0" stroke-width="1.5"/>
+              <text x="69"  y="37" text-anchor="middle" fill="#0a7a50" font-size="13" font-weight="700">W_ship</text>
+              <text x="69"  y="54" text-anchor="middle" fill="#6a8aaa" font-size="10" id="cm-wship">Hmotnosť lode</text>
+              <rect x="10"  y="98"  width="118" height="46" rx="8" fill="#f0f6ff" stroke="#c0d8f0" stroke-width="1.5"/>
+              <text x="69"  y="117" text-anchor="middle" fill="#0a7a50" font-size="13" font-weight="700">W_cargo</text>
+              <text x="69"  y="134" text-anchor="middle" fill="#6a8aaa" font-size="10" id="cm-wcargo">Náklad</text>
+              <text x="164" y="92" text-anchor="middle" fill="#1565c0" font-size="16" font-weight="700">+</text>
+              <rect x="192" y="62"  width="120" height="46" rx="8" fill="#f0f6ff" stroke="#a0c0e0" stroke-width="1.5"/>
+              <text x="252" y="81"  text-anchor="middle" fill="#0a7a50" font-size="12" font-weight="700">W_total</text>
+              <text x="252" y="97"  text-anchor="middle" fill="#6a8aaa" font-size="10" id="cm-wtotal">= W_ship + W_cargo</text>
+              <rect x="362" y="142" width="100" height="40" rx="8" fill="#fffbf0" stroke="#e0d080" stroke-width="1.5"/>
+              <text x="412" y="162" text-anchor="middle" fill="#a06000" font-size="14" font-weight="700">ρ</text>
+              <text x="412" y="177" text-anchor="middle" fill="#6a8aaa" font-size="10" id="cm-rho">Hustota vody</text>
+              <rect x="358" y="62"  width="120" height="46" rx="8" fill="#f0f6ff" stroke="#a0c0e0" stroke-width="1.5"/>
+              <text x="418" y="81"  text-anchor="middle" fill="#0a7a50" font-size="12" font-weight="700">V</text>
+              <text x="418" y="97"  text-anchor="middle" fill="#6a8aaa" font-size="10" id="cm-vol">= W_kg / ρ</text>
+              <rect x="528" y="148" width="44" height="36" rx="7" fill="#fffbf0" stroke="#e0d080" stroke-width="1.5"/>
+              <text x="550" y="168" text-anchor="middle" fill="#a06000" font-size="13" font-weight="700">L</text>
+              <text x="550" y="181" text-anchor="middle" fill="#6a8aaa" font-size="9" id="cm-L">Dĺžka</text>
+              <rect x="577" y="148" width="40" height="36" rx="7" fill="#fffbf0" stroke="#e0d080" stroke-width="1.5"/>
+              <text x="597" y="168" text-anchor="middle" fill="#a06000" font-size="13" font-weight="700">B</text>
+              <text x="597" y="181" text-anchor="middle" fill="#6a8aaa" font-size="9" id="cm-B">Šírka</text>
+              <rect x="528" y="62"  width="88"  height="46" rx="8" fill="#e8f2ff" stroke="#1565c0" stroke-width="2"/>
+              <text x="572" y="81"  text-anchor="middle" fill="#1565c0" font-size="16" font-weight="700">T</text>
+              <text x="572" y="97"  text-anchor="middle" fill="#4a7ab0" font-size="10" id="cm-draft">PONOR</text>
             </svg>
           </div>
         </div>
-
-        <!-- Formulas table -->
         <div>
-          <div class="academic-sub-title" data-i18n="formulasTitle">Vzorce – manuálne overenie</div>
-          <table class="formula-table">
-            <thead>
-              <tr>
-                <th data-i18n="fmlLabel">Veličina</th>
-                <th data-i18n="fmlExpr">Vzorec</th>
-                <th data-i18n="fmlDesc">Popis</th>
-              </tr>
-            </thead>
+          <div class="ac-sub" data-i18n="formulasTitle">Vzorce – manuálne overenie</div>
+          <table class="ftbl">
+            <thead><tr><th data-i18n="fmlQ">Veličina</th><th data-i18n="fmlF">Vzorec</th><th data-i18n="fmlD">Popis</th></tr></thead>
             <tbody>
-              <tr>
-                <td>W<sub>total</sub></td>
-                <td class="formula-expr">W_ship + W_cargo</td>
-                <td class="formula-desc" data-i18n="f1">Celková hmotnosť [t]</td>
-              </tr>
-              <tr>
-                <td>W<sub>kg</sub></td>
-                <td class="formula-expr">W_total × 1000</td>
-                <td class="formula-desc" data-i18n="f2">Prepočet na kilogramy</td>
-              </tr>
-              <tr>
-                <td>V</td>
-                <td class="formula-expr">W_kg / ρ</td>
-                <td class="formula-desc" data-i18n="f3">Objem výtlaku [m³] – Archimédov zákon</td>
-              </tr>
-              <tr>
-                <td>T</td>
-                <td class="formula-expr">V / (L × B)</td>
-                <td class="formula-desc" data-i18n="f4">Ponor [m] – geometria obdĺžn. trupu</td>
-              </tr>
-              <tr>
-                <td>T <em>(priamo)</em></td>
-                <td class="formula-expr">W_kg / (ρ × L × B)</td>
-                <td class="formula-desc" data-i18n="f5">Skrátený výpočet ponoru</td>
-              </tr>
-              <tr>
-                <td>C<sub>B</sub></td>
-                <td class="formula-expr">V / (L × B × T) = 1.0</td>
-                <td class="formula-desc" data-i18n="f6">Blokový koeficient – obdĺžnik = 1.0</td>
-              </tr>
-              <tr>
-                <td>F<sub>A</sub></td>
-                <td class="formula-expr">ρ × g × V = W_kg × g</td>
-                <td class="formula-desc" data-i18n="f7">Archimédova vztlaková sila [N]</td>
-              </tr>
+              <tr><td>W<sub>total</sub></td><td class="fe">W_ship + W_cargo</td><td class="fd" data-i18n="f1">Celková hmotnosť [t]</td></tr>
+              <tr><td>W<sub>kg</sub></td>  <td class="fe">W_total × 1000</td>   <td class="fd" data-i18n="f2">Prepočet na kg</td></tr>
+              <tr><td>V</td>               <td class="fe">W_kg / ρ</td>          <td class="fd" data-i18n="f3">Objem výtlaku [m³]</td></tr>
+              <tr><td>T</td>               <td class="fe">V / (L × B)</td>       <td class="fd" data-i18n="f4">Ponor [m] – geometria</td></tr>
+              <tr><td>T (priamo)</td>       <td class="fe">W_kg / (ρ×L×B)</td>   <td class="fd" data-i18n="f5">Skrátený výpočet</td></tr>
+              <tr><td>C<sub>B</sub></td>   <td class="fe">V/(L×B×T) = 1.0</td>  <td class="fd" data-i18n="f6">Blokový koeficient</td></tr>
+              <tr><td>F<sub>A</sub></td>   <td class="fe">ρ × g × V</td>         <td class="fd" data-i18n="f7">Vztlaková sila [N]</td></tr>
             </tbody>
           </table>
-          <div class="academic-note" id="academic-note" data-i18n="acNote">
-            Poznámka: Kalkulačka predpokladá obdĺžnikový trup (C<sub>B</sub> = 1.0). Reálne lode majú C<sub>B</sub> = 0.45–0.85. Pre modelárske účely: nastavte L, B podľa modelu a hmotnosti zodpovedajúce skutočnej lodi prepočítanej na mierku.
-          </div>
+          <div class="ac-note" data-i18n="acNote">Poznámka: Kalkulačka predpokladá obdĺžnikový trup (C<sub>B</sub> = 1.0). Reálne lode: C<sub>B</sub> = 0.45–0.85.</div>
         </div>
-      </div><!-- /.academic-grid -->
-    </div><!-- /.academic-body -->
-  </div><!-- /.academic-section -->
+      </div>
+    </div>
+  </div>
 
   <footer>HullViz &copy; 2025 &mdash; <span data-i18n="footerNote">Modelársky kalkulátor ponoru lode</span></footer>
+</div>
 
-</div><!-- /.container -->
-
-<!-- ══ SCRIPT ═══════════════════════════════════════════════════════════════ -->
 <script>
-/* ─── STATE ─────────────────────────────────────────────────────────────── */
+/* ─── STATE ─── */
 const DEFAULTS = { L: 50, B: 10, wShip: 1000, wCargo: 0, rho: 1025 };
-// metric base values (m, t, kg/m³)
 const S = { lang: 'sk', units: 'metric', ...DEFAULTS };
 
-/* ─── I18N ───────────────────────────────────────────────────────────────── */
+/* ─── UNIT DEFINITIONS ─── */
+// [conversionFactor, label]  — internal values always in metric (m, t, kg/m³)
+const UNITS = {
+  metric:   { L:[1,'m'],        W:[1,'t'],           rho:[1,'kg/m³'],        vol:[1,'m³'],     T:[1,'m'] },
+  imperial: { L:[3.28084,'ft'], W:[0.984207,'LT'],   rho:[0.062428,'lb/ft³'], vol:[35.3147,'ft³'], T:[3.28084,'ft'] }
+};
+const uL = () => UNITS[S.units].L;
+const uW = () => UNITS[S.units].W;
+const uR = () => UNITS[S.units].rho;
+const uV = () => UNITS[S.units].vol;
+const uT = () => UNITS[S.units].T;
+
+/* ─── I18N ─── */
 const I18N = {
   sk: {
-    appTitle: 'HullViz – Kalkulátor Ponoru Lode',
-    appSub: 'Obdĺžnikový model pontónu · Archimédov zákon · Modelárske použitie',
-    metricBtn: 'Metrické', imperialBtn: 'Imperiálne',
-    inputsTitle: 'Parametre trupu a zaťaženia',
-    weightsTitle: 'Záťaž (vertikálne)',
-    labelL: 'Dĺžka lode', labelB: 'Šírka trupu (Bok)',
-    labelWShip: 'Hmotnosť lode', labelWCargo: 'Náklad',
-    labelRho: 'Hustota vody',
-    resetBtn: 'Obnoviť predvolené',
-    visualTitle: 'Pohľad zboku – vojnová loď',
-    graphTitle: 'Závislosť hmotnosť / ponor',
-    resDraft: 'Ponor T', resDraftSub: 'hĺbka vodovody',
-    resVolume: 'Objem výtlaku V', resVolumeSub: 'ponorený objem',
-    resWeight: 'Celková hmotnosť', resWeightSub: 'loď + náklad',
-    academicTitle: 'Akademická sekcia',
-    conceptMapTitle: 'Mapa pojmov',
-    formulasTitle: 'Vzorce – manuálne overenie',
-    fmlLabel: 'Veličina', fmlExpr: 'Vzorec', fmlDesc: 'Popis',
-    f1: 'Celková hmotnosť [t]', f2: 'Prepočet na kilogramy',
-    f3: 'Objem výtlaku [m³] – Archimédov zákon',
-    f4: 'Ponor [m] – geometria obdĺžn. trupu',
-    f5: 'Skrátený výpočet ponoru',
-    f6: 'Blokový koeficient – obdĺžnik = 1.0',
-    f7: 'Archimédova vztlaková sila [N]',
-    acNote: 'Poznámka: Kalkulačka predpokladá obdĺžnikový trup (C<sub>B</sub> = 1.0). Reálne lode majú C<sub>B</sub> = 0.45–0.85. Pre modelárske účely: nastavte L, B podľa modelu a hmotnosti zodpovedajúce skutočnej lodi prepočítanej na mierku.',
-    warnL: '⚠ Ponor presahuje dĺžku lode — nerealistická geometria.',
-    warn50: '⚠ Ponor > 50 m — nerealistická hodnota.',
-    graphMass: 'Celková hmotnosť', graphDraft: 'Ponor',
-    footerNote: 'Modelársky kalkulátor ponoru lode',
-    // concept map
-    cmWship: 'Hmotnosť lode', cmWcargo: 'Náklad', cmWtotal: '= W_ship + W_cargo',
-    cmRho: 'Hustota vody', cmVolume: '= W_kg / ρ', cmDraft: 'PONOR',
-    // tooltips
-    tipL: 'Dĺžka lode medzi kolmicami (LBP). Určuje plochu vodovody — spolu so šírkou definuje L×B základ pre výpočet ponoru.',
-    tipB: 'Maximálna šírka trupu lode. Spolu s dĺžkou definuje plochu vodovody A_WP = L × B. Väčšia šírka → menší ponor.',
-    tipWs: 'Prázdna hmotnosť (lightship): trup, pohon, výstroj, pevné zariadenia. Nemení sa nakládkou — je to konštanta lode.',
-    tipWc: 'Premenlivá záťaž: náklad, zásoby, palivo, posádka. Posúvanie jazdca simuluje nakladanie lode — ponor sa mení okamžite.',
-    tipRho: 'Hustota závisí od slanosti a teploty. Sladká: 1000 kg/m³, morská: 1025, Mŕtve more: ~1240. Vyššia hustota → menší ponor.',
+    hdrTitle:'HullViz – Kalkulátor Ponoru Lode', hdrSub:'Obdĺžnikový model pontónu · Archimédov zákon · Modelárske použitie',
+    metricBtn:'Metrické', imperialBtn:'Imperiálne',
+    inputsTitle:'Parametre trupu a zaťaženia', weightsTitle:'Záťaž (vertikálne)',
+    labelL:'Dĺžka lode', labelB:'Šírka trupu (Bok)', labelWShip:'Hmotnosť lode', labelWCargo:'Náklad', labelRho:'Hustota vody',
+    resetBtn:'Obnoviť predvolené', visualTitle:'Pohľad zboku – vojnová loď', graphTitle:'Závislosť hmotnosť / ponor',
+    resDraft:'Ponor T', resDraftSub:'hĺbka vodovody', resVol:'Objem výtlaku V', resVolSub:'ponorený objem', resWt:'Celková hmotnosť', resWtSub:'loď + náklad',
+    academicTitle:'Akademická sekcia', conceptMapTitle:'Mapa pojmov', formulasTitle:'Vzorce – manuálne overenie',
+    fmlQ:'Veličina', fmlF:'Vzorec', fmlD:'Popis',
+    f1:'Celková hmotnosť [t]', f2:'Prepočet na kg', f3:'Objem výtlaku [m³]', f4:'Ponor [m] – geometria', f5:'Skrátený výpočet', f6:'Blokový koeficient', f7:'Vztlaková sila [N]',
+    acNote:'Poznámka: Kalkulačka predpokladá obdĺžnikový trup (C<sub>B</sub> = 1.0). Reálne lode: C<sub>B</sub> = 0.45–0.85.',
+    warnL:'⚠ Ponor presahuje dĺžku lode – nerealistická geometria.', warn50:'⚠ Ponor > 50 m – nerealistická hodnota.',
+    graphMass:'Celková hmotnosť', graphDraft:'Ponor', footerNote:'Modelársky kalkulátor ponoru lode',
+    cmWship:'Hmotnosť lode', cmWcargo:'Náklad', cmWtotal:'= W_ship + W_cargo', cmRho:'Hustota vody', cmVol:'= W_kg / ρ', cmDraft:'PONOR', cmL:'Dĺžka', cmB:'Šírka',
+    tipL:'Dĺžka lode medzi kolmicami (LBP). Určuje plochu vodovody — spolu so šírkou definuje L×B základ pre výpočet ponoru.',
+    tipB:'Maximálna šírka trupu. Spolu s dĺžkou definuje plochu vodovody A_WP = L×B. Väčšia šírka → menší ponor.',
+    tipWs:'Prázdna hmotnosť (lightship): trup, pohon, výstroj. Nemení sa nakládkou — je to konštanta lode.',
+    tipWc:'Premenlivá záťaž: náklad, zásoby, palivo, posádka. Posúvanie jazdca simuluje nakladanie lode.',
+    tipRho:'Hustota závisí od slanosti. Sladká: 1000 kg/m³, morská: 1025, Mŕtve more: ~1240. Vyššia hustota → menší ponor.',
   },
   en: {
-    appTitle: 'HullViz – Ship Draft Calculator',
-    appSub: 'Rectangular pontoon model · Archimedes principle · Scale modelling',
-    metricBtn: 'Metric', imperialBtn: 'Imperial',
-    inputsTitle: 'Hull & Load Parameters',
-    weightsTitle: 'Loading (vertical)',
-    labelL: 'Ship Length', labelB: 'Beam (Width)',
-    labelWShip: 'Ship Weight', labelWCargo: 'Cargo Weight',
-    labelRho: 'Water Density',
-    resetBtn: 'Reset to Defaults',
-    visualTitle: 'Side View – Warship',
-    graphTitle: 'Mass vs. Draft Curve',
-    resDraft: 'Draft T', resDraftSub: 'waterline depth',
-    resVolume: 'Displacement V', resVolumeSub: 'submerged volume',
-    resWeight: 'Total Weight', resWeightSub: 'ship + cargo',
-    academicTitle: 'Academic Section',
-    conceptMapTitle: 'Concept Map',
-    formulasTitle: 'Formulas for Manual Verification',
-    fmlLabel: 'Quantity', fmlExpr: 'Formula', fmlDesc: 'Description',
-    f1: 'Total weight [t]', f2: 'Convert to kilograms',
-    f3: 'Displacement volume [m³] – Archimedes principle',
-    f4: 'Draft [m] – rectangular hull geometry',
-    f5: 'Compact draft formula',
-    f6: 'Block coefficient – rectangle = 1.0',
-    f7: "Archimedes buoyancy force [N]",
-    acNote: 'Note: This calculator assumes a rectangular hull (C<sub>B</sub> = 1.0). Real ships have C<sub>B</sub> = 0.45–0.85. For scale modelling: set L, B to model dimensions and weights scaled from the real ship.',
-    warnL: '⚠ Draft exceeds ship length — unrealistic geometry.',
-    warn50: '⚠ Draft > 50 m — unrealistically deep.',
-    graphMass: 'Total Mass', graphDraft: 'Draft',
-    footerNote: 'Ship draft calculator for scale modelling',
-    cmWship: 'Ship weight', cmWcargo: 'Cargo', cmWtotal: '= W_ship + W_cargo',
-    cmRho: 'Water density', cmVolume: '= W_kg / ρ', cmDraft: 'DRAFT',
-    tipL: 'Length between perpendiculars (LBP). Together with beam it defines the waterplane area L×B used to compute draft.',
-    tipB: 'Maximum hull breadth. Together with length defines waterplane area A_WP = L × B. Wider hull → shallower draft.',
-    tipWs: 'Lightship weight: hull, propulsion, equipment, fixed systems. Does not change with loading — it is a ship constant.',
-    tipWc: 'Variable load: cargo, stores, fuel, crew. Moving this slider simulates loading the ship — draft changes immediately.',
-    tipRho: 'Water density depends on salinity and temperature. Fresh: 1000 kg/m³, Sea: 1025, Dead Sea: ~1240. Higher density → shallower draft.',
+    hdrTitle:'HullViz – Ship Draft Calculator', hdrSub:'Rectangular pontoon model · Archimedes principle · Scale modelling',
+    metricBtn:'Metric', imperialBtn:'Imperial',
+    inputsTitle:'Hull & Load Parameters', weightsTitle:'Loading (vertical)',
+    labelL:'Ship Length', labelB:'Beam (Width)', labelWShip:'Ship Weight', labelWCargo:'Cargo Weight', labelRho:'Water Density',
+    resetBtn:'Reset to Defaults', visualTitle:'Side View – Warship', graphTitle:'Mass vs. Draft Curve',
+    resDraft:'Draft T', resDraftSub:'waterline depth', resVol:'Displacement V', resVolSub:'submerged volume', resWt:'Total Weight', resWtSub:'ship + cargo',
+    academicTitle:'Academic Section', conceptMapTitle:'Concept Map', formulasTitle:'Formulas for Manual Verification',
+    fmlQ:'Quantity', fmlF:'Formula', fmlD:'Description',
+    f1:'Total weight [t]', f2:'Convert to kg', f3:'Displacement volume [m³]', f4:'Draft [m] – geometry', f5:'Compact formula', f6:'Block coefficient', f7:'Buoyancy force [N]',
+    acNote:'Note: Assumes rectangular hull (C<sub>B</sub> = 1.0). Real ships have C<sub>B</sub> = 0.45–0.85.',
+    warnL:'⚠ Draft exceeds ship length — unrealistic geometry.', warn50:'⚠ Draft > 50 m — unrealistically deep.',
+    graphMass:'Total Mass', graphDraft:'Draft', footerNote:'Ship draft calculator for scale modelling',
+    cmWship:'Ship weight', cmWcargo:'Cargo', cmWtotal:'= W_ship + W_cargo', cmRho:'Water density', cmVol:'= W_kg / ρ', cmDraft:'DRAFT', cmL:'Length', cmB:'Beam',
+    tipL:'Length between perpendiculars (LBP). Together with beam defines waterplane area L×B used to compute draft.',
+    tipB:'Maximum hull breadth. Together with length defines A_WP = L×B. Wider hull → shallower draft.',
+    tipWs:'Lightship weight: hull, propulsion, equipment. Does not change with loading.',
+    tipWc:'Variable load: cargo, stores, fuel, crew. Move slider to simulate loading the ship.',
+    tipRho:'Water density depends on salinity. Fresh: 1000, Sea: 1025, Dead Sea: ~1240 kg/m³. Higher → shallower draft.',
   }
 };
-const tx = key => I18N[S.lang][key] || key;
+const tx = k => I18N[S.lang][k] || k;
 
-/* ─── UNIT SYSTEM ────────────────────────────────────────────────────────── */
-// Metric (internal): m, t, kg/m³, m³
-// Imperial/Nautical: ft (length + draft), LT = long ton, lb/ft³, ft³
-const U = {
-  metric:   { L:[1,'m'],        wt:[1,'t'],           rho:[1,'kg/m³'],       vol:[1,'m³'],    draft:[1,'m'] },
-  imperial: { L:[3.28084,'ft'], wt:[0.984207,'LT'],   rho:[0.062428,'lb/ft³'], vol:[35.3147,'ft³'], draft:[3.28084,'ft'] }
-};
-const uL   = () => U[S.units].L;
-const uWt  = () => U[S.units].wt;
-const uRho = () => U[S.units].rho;
-const uVol = () => U[S.units].vol;
-const uDraft = () => U[S.units].draft;  // draft uses same as length for metric, ft for imperial
-const fmt2 = (v, [f, lbl]) => (v * f).toFixed(2) + ' ' + lbl;
-const fmt3 = (v, [f, lbl]) => (v * f).toFixed(3) + ' ' + lbl;
-const fmt1 = (v, [f, lbl]) => (v * f).toFixed(1) + ' ' + lbl;
-const fmtVal = (v, [f]) => (v * f);
-
-/* ─── PHYSICS ─────────────────────────────────────────────────────────────── */
-function computeDraft() {
+/* ─── PHYSICS ─── */
+function compute() {
   const { L, B, wShip, wCargo, rho } = S;
-  const totalWeightTons = wShip + wCargo;
-  const totalWeightKg   = totalWeightTons * 1000;
-  const draft           = totalWeightKg / (rho * L * B);
-  const dispVolume      = L * B * draft;
-  return { draft, dispVolume, totalWeightTons, totalWeightKg };
+  const totalT  = wShip + wCargo;
+  const totalKg = totalT * 1000;
+  const draft   = totalKg / (rho * L * B);
+  const vol     = L * B * draft;
+  return { draft, vol, totalT };
 }
 
 function computeCurve(N = 25) {
   const { L, B, rho } = S;
-  const cur = computeDraft();
-  const weightFor5m = (rho * L * B * 5) / 1000;
-  const maxW = Math.max(cur.totalWeightTons * 2, 200, weightFor5m);
+  const { totalT } = compute();
+  const maxW = Math.max(totalT * 2, 200, (rho * L * B * 5) / 1000);
   return Array.from({ length: N + 1 }, (_, i) => {
-    const mass = (maxW / N) * i;
-    return { mass, draft: (mass * 1000) / (rho * L * B) };
+    const mass = maxW * i / N;
+    return { mass, draft: mass * 1000 / (rho * L * B) };
   });
 }
 
-/* ─── CANVAS HELPER ──────────────────────────────────────────────────────── */
+/* ─── CANVAS SETUP ─── */
 function setupCanvas(id) {
   const c = document.getElementById(id);
   const dpr = window.devicePixelRatio || 1;
@@ -769,539 +401,391 @@ function setupCanvas(id) {
   return { ctx, W: r.width, H: r.height };
 }
 
-/* ─── DRAW WARSHIP ───────────────────────────────────────────────────────── */
-function drawShipPreview(result, inputs) {
+/* ─── DRAW WARSHIP ─── */
+function drawShip(res) {
   const cv = setupCanvas('ship-canvas');
   if (!cv) return;
   const { ctx, W, H } = cv;
-  const { draft } = result;
-  const { L } = inputs;
+  const { draft } = res;
 
-  // Visual hull depth
-  const freeboard = Math.max(draft * 0.35, 2.5);
-  const hullD     = draft + freeboard;
-  const superH    = Math.max(freeboard * 1.6, hullD * 0.7); // superstructure height above deck
+  // Visual dimensions — INDEPENDENT of real L/T ratio so ship always looks proportional
+  const freeV  = Math.max(draft * 0.30, 2.5);  // visual freeboard (min 2.5 m)
+  const hullDV = draft + freeV;
+  const superV = Math.max(freeV * 1.9, hullDV * 0.70);  // superstructure above deck
+  const totalV = hullDV + superV;
 
-  const pad = { t: 14, r: 80, b: 28, l: 28 };
+  const pad = { t: 12, r: 82, b: 22, l: 20 };
   const dW  = W - pad.l - pad.r;
   const dH  = H - pad.t - pad.b;
 
-  const totalVH = hullD + superH;
-  const scaleX  = dW / (L * 1.06);
-  const scaleY  = dH / totalVH;
-  const sc      = Math.min(scaleX, scaleY);
+  // Fixed horizontal fill (84% of canvas width) — ship never stretches to extremes
+  const hW   = dW * 0.84;
+  // Independent vertical scale so the hull always has visible height
+  const scY  = (dH * 0.72) / totalV;
 
-  const hW     = L * sc;         // hull length in pixels
-  const hD     = hullD * sc;     // hull depth keel→deck
-  const superPx = superH * sc;   // superstructure pixels
+  const hx       = pad.l + (dW - hW) / 2;
+  const superPx  = superV * scY;
+  const hD       = hullDV * scY;
+  const deckY    = pad.t + superPx;
+  const keelY    = deckY + hD;
+  const freeboardPx = freeV * scY;
+  const draftPx  = Math.max(draft * scY, 2);  // min 2px so waterline is always visible
+  const waterY   = deckY + freeboardPx;
 
-  const hx     = pad.l + (dW - hW) / 2;  // stern (left)
-  const deckY  = pad.t + superPx;
-  const keelY  = deckY + hD;
-  const waterY = deckY + freeboard * sc;
-  const freeboardPx = freeboard * sc;
-  const draftPx = draft * sc;
+  // Sky
+  const sky = ctx.createLinearGradient(0, 0, 0, waterY);
+  sky.addColorStop(0, '#b8dcf8'); sky.addColorStop(1, '#ceeaff');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, waterY);
 
-  // ── Background sea gradient ──
-  const seaBg = ctx.createLinearGradient(0, waterY, 0, H);
-  seaBg.addColorStop(0, '#0a2540');
-  seaBg.addColorStop(1, '#071828');
-  ctx.fillStyle = seaBg;
-  ctx.fillRect(0, waterY, W, H - waterY);
+  // Sea
+  const sea = ctx.createLinearGradient(0, waterY, 0, H);
+  sea.addColorStop(0, '#3a88cc'); sea.addColorStop(1, '#1a5090');
+  ctx.fillStyle = sea; ctx.fillRect(0, waterY, W, H - waterY);
 
-  // Sky gradient
-  const skyBg = ctx.createLinearGradient(0, 0, 0, waterY);
-  skyBg.addColorStop(0, '#0a1520');
-  skyBg.addColorStop(1, '#0d2035');
-  ctx.fillStyle = skyBg;
-  ctx.fillRect(0, 0, W, waterY);
-
-  // ── Define hull outline path ──
-  function hullPath() {
+  // Hull silhouette path (bow right, stern left)
+  const hull = () => {
     ctx.beginPath();
-    ctx.moveTo(hx + hW * 0.02, deckY);                         // stern deck
-    ctx.lineTo(hx + hW * 0.90, deckY);                         // main deck
-    ctx.lineTo(hx + hW * 0.97, deckY - hD * 0.04);            // sheer rise
-    ctx.lineTo(hx + hW * 1.03, deckY + hD * 0.28);            // bow flare (raked bow)
-    ctx.lineTo(hx + hW * 0.97, keelY);                        // bow keel
-    ctx.lineTo(hx + hW * 0.04, keelY);                        // keel
-    ctx.lineTo(hx,             deckY + hD * 0.62);             // stern transom
+    ctx.moveTo(hx + hW * 0.02, deckY);
+    ctx.lineTo(hx + hW * 0.90, deckY);
+    ctx.lineTo(hx + hW * 0.97, deckY - hD * 0.03);   // sheer rise
+    ctx.lineTo(hx + hW * 1.03, deckY + hD * 0.27);   // bow flare (raked)
+    ctx.lineTo(hx + hW * 0.97, keelY);
+    ctx.lineTo(hx + hW * 0.04, keelY);
+    ctx.lineTo(hx,             deckY + hD * 0.60);    // stern transom
     ctx.closePath();
-  }
+  };
 
-  // ── Draw clipped hull fill ──
-  hullPath();
-  ctx.save();
-  ctx.clip();
+  // Clip and fill above/below waterline
+  hull(); ctx.save(); ctx.clip();
 
-  // Freeboard (above waterline) – NATO gray
-  const fbGrad = ctx.createLinearGradient(hx, deckY, hx, waterY);
-  fbGrad.addColorStop(0, '#5a6878');
-  fbGrad.addColorStop(1, '#4a5868');
-  ctx.fillStyle = fbGrad;
-  ctx.fillRect(hx - 5, deckY - 5, hW + 15, freeboardPx + 5);
+  const fbG = ctx.createLinearGradient(0, deckY, 0, waterY);
+  fbG.addColorStop(0, '#7a8a9a'); fbG.addColorStop(1, '#5a6a7a');
+  ctx.fillStyle = fbG;
+  ctx.fillRect(hx - 5, deckY - 5, hW + 20, freeboardPx + 5);
 
-  // Submerged (below waterline) – dark anti-fouling red
-  const subGrad = ctx.createLinearGradient(hx, waterY, hx, keelY);
-  subGrad.addColorStop(0, '#5a2020');
-  subGrad.addColorStop(1, '#2a0f0f');
-  ctx.fillStyle = subGrad;
-  ctx.fillRect(hx - 5, waterY, hW + 15, draftPx + 5);
+  const subG = ctx.createLinearGradient(0, waterY, 0, keelY);
+  subG.addColorStop(0, '#7a2020'); subG.addColorStop(1, '#3a0f0f');
+  ctx.fillStyle = subG;
+  ctx.fillRect(hx - 5, waterY - 1, hW + 20, draftPx + 5);
 
   ctx.restore();
 
-  // Hull outline
-  hullPath();
-  ctx.strokeStyle = '#2a3a4a';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
+  // Boot-topping strip at waterline
+  ctx.fillStyle = 'rgba(160,40,40,0.55)';
+  ctx.fillRect(hx + hW * 0.04, waterY - hD * 0.008, hW * 0.93, hD * 0.016);
 
-  // ── Boot-topping stripe at waterline ──
-  ctx.fillStyle = 'rgba(180,60,60,0.5)';
-  ctx.fillRect(hx + hW * 0.03, waterY - hD * 0.01, hW * 0.94, hD * 0.02);
+  // Hull outline
+  hull(); ctx.strokeStyle = '#3a4a5a'; ctx.lineWidth = 1.5; ctx.stroke();
 
   // ── Superstructure ──
-  const sbX  = hx + hW * 0.34;   // bridge starts at 34% from stern
-  const sbW  = hW * 0.20;        // bridge block width
-  const sbH  = hD * 0.30;        // bridge block height
+  const sbX = hx + hW * 0.34;
+  const sbW = hW * 0.20;
+  const sbH = hD * 0.30;
 
-  // Aft deckhouse (smaller block)
-  ctx.fillStyle = '#3a4a58';
-  ctx.fillRect(hx + hW * 0.12, deckY - hD * 0.10, hW * 0.10, hD * 0.10);
+  // Aft deckhouse
+  ctx.fillStyle = '#6a7a88';
+  ctx.fillRect(hx + hW * 0.12, deckY - hD * 0.09, hW * 0.10, hD * 0.09);
 
-  // Main superstructure block
-  const mainSbGrad = ctx.createLinearGradient(sbX, deckY - sbH, sbX, deckY);
-  mainSbGrad.addColorStop(0, '#4a5a6a');
-  mainSbGrad.addColorStop(1, '#3a4a58');
-  ctx.fillStyle = mainSbGrad;
-  ctx.beginPath();
-  ctx.rect(sbX, deckY - sbH, sbW, sbH);
-  ctx.fill();
-  ctx.strokeStyle = '#2a3a4a';
-  ctx.lineWidth = 1;
-  ctx.stroke();
+  // Main bridge block
+  const bridgeG = ctx.createLinearGradient(0, deckY - sbH, 0, deckY);
+  bridgeG.addColorStop(0, '#6a7a8a'); bridgeG.addColorStop(1, '#5a6a7a');
+  ctx.fillStyle = bridgeG;
+  ctx.fillRect(sbX, deckY - sbH, sbW, sbH);
+  ctx.strokeStyle = '#4a5a6a'; ctx.lineWidth = 0.8; ctx.strokeRect(sbX, deckY - sbH, sbW, sbH);
 
   // Upper bridge level
-  ctx.fillStyle = '#506070';
-  ctx.fillRect(sbX + sbW * 0.08, deckY - sbH - hD * 0.12, sbW * 0.84, hD * 0.12);
-  ctx.strokeStyle = '#2a3a4a'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = '#748494';
+  ctx.fillRect(sbX + sbW * 0.08, deckY - sbH - hD * 0.11, sbW * 0.84, hD * 0.11);
+  ctx.strokeStyle = '#4a5a6a'; ctx.strokeRect(sbX + sbW * 0.08, deckY - sbH - hD * 0.11, sbW * 0.84, hD * 0.11);
 
   // Compass bridge top
-  ctx.fillStyle = '#5a7080';
-  ctx.fillRect(sbX + sbW * 0.20, deckY - sbH - hD * 0.22, sbW * 0.60, hD * 0.10);
+  ctx.fillStyle = '#7a8e9e';
+  ctx.fillRect(sbX + sbW * 0.18, deckY - sbH - hD * 0.20, sbW * 0.62, hD * 0.09);
 
-  // Bridge windows
-  ctx.fillStyle = '#1a3a5a';
+  // Bridge windows (5 slots)
+  ctx.fillStyle = '#2a4a6a';
   for (let i = 0; i < 5; i++) {
-    ctx.fillRect(sbX + sbW * (0.1 + i * 0.17), deckY - sbH + hD * 0.08, sbW * 0.10, hD * 0.08);
+    ctx.fillRect(sbX + sbW * (0.09 + i * 0.17), deckY - sbH + hD * 0.07, sbW * 0.10, hD * 0.08);
   }
 
   // Funnel
   const fX = sbX + sbW * 0.68;
-  const fH = hD * 0.22;
-  ctx.fillStyle = '#2a3a48';
-  ctx.fillRect(fX, deckY - sbH + hD * 0.04, sbW * 0.12, fH);
-  // Funnel cap
-  ctx.fillStyle = '#1a2530';
-  ctx.fillRect(fX - sbW * 0.01, deckY - sbH + hD * 0.04, sbW * 0.14, hD * 0.025);
+  ctx.fillStyle = '#3a4a58';
+  ctx.fillRect(fX, deckY - sbH + hD * 0.04, sbW * 0.12, hD * 0.20);
+  ctx.fillStyle = '#1a2a38';
+  ctx.fillRect(fX - sbW * 0.01, deckY - sbH + hD * 0.04, sbW * 0.14, hD * 0.02);
 
-  // ── Forecastle (raised bow deck) ──
-  ctx.fillStyle = '#4a5868';
-  ctx.fillRect(hx + hW * 0.78, deckY - hD * 0.10, hW * 0.18, hD * 0.10);
+  // Forecastle (raised bow deck)
+  ctx.fillStyle = '#6a7a88';
+  ctx.fillRect(hx + hW * 0.78, deckY - hD * 0.09, hW * 0.18, hD * 0.09);
 
-  // ── Forward gun mount ──
-  const gunX = hx + hW * 0.87;
-  const gunY = deckY - hD * 0.10;
-  ctx.fillStyle = '#606878';
-  ctx.beginPath();
-  ctx.arc(gunX, gunY, hW * 0.022, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#3a4858'; ctx.lineWidth = 1; ctx.stroke();
-  // Gun barrel
-  ctx.strokeStyle = '#404858'; ctx.lineWidth = Math.max(2, hW * 0.008);
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(gunX, gunY);
-  ctx.lineTo(gunX + hW * 0.045, gunY - hD * 0.065);
-  ctx.stroke();
+  // Forward gun mount
+  const gx = hx + hW * 0.87, gy = deckY - hD * 0.09;
+  ctx.fillStyle = '#788898';
+  ctx.beginPath(); ctx.arc(gx, gy, hW * 0.018, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#4a5868'; ctx.lineWidth = 0.8; ctx.stroke();
+  ctx.strokeStyle = '#4a5868';
+  ctx.lineWidth = Math.max(1.5, hW * 0.006); ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx + hW * 0.038, gy - hD * 0.055); ctx.stroke();
   ctx.lineCap = 'butt';
 
-  // ── Mast ──
-  const mastX = sbX + sbW * 0.52;
+  // Mast + radar
+  const mastX   = sbX + sbW * 0.50;
   const mastTop = deckY - sbH - hD * 0.50;
-  ctx.strokeStyle = '#8aa0b0'; ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(mastX, deckY - sbH - hD * 0.22);
-  ctx.lineTo(mastX, mastTop);
-  ctx.stroke();
-  // Mast crossbar
-  ctx.beginPath();
-  ctx.moveTo(mastX - hW * 0.025, mastTop + hD * 0.06);
-  ctx.lineTo(mastX + hW * 0.025, mastTop + hD * 0.06);
-  ctx.stroke();
-  // Radar dome
-  ctx.fillStyle = '#b0c0cc';
-  ctx.beginPath();
-  ctx.arc(mastX, mastTop, hW * 0.014, 0, Math.PI * 2);
-  ctx.fill();
-  // Radar arms (spinning radar antenna visual)
-  ctx.strokeStyle = '#8aa0b0'; ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(mastX, mastTop);
-  ctx.lineTo(mastX + hW * 0.02, mastTop - hD * 0.04);
-  ctx.stroke();
+  ctx.strokeStyle = '#8898a8'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(mastX, deckY - sbH - hD * 0.20); ctx.lineTo(mastX, mastTop); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mastX - hW * 0.022, mastTop + hD * 0.06); ctx.lineTo(mastX + hW * 0.022, mastTop + hD * 0.06); ctx.stroke();
+  ctx.fillStyle = '#aabbcc';
+  ctx.beginPath(); ctx.arc(mastX, mastTop, hW * 0.012, 0, Math.PI * 2); ctx.fill();
 
-  // ── Portholes ──
-  const portRow = deckY + hD * 0.22;
-  if (portRow < waterY - 2) {
-    const nPorts = Math.max(3, Math.floor(hW / 38));
-    for (let i = 0; i < nPorts; i++) {
-      const px = hx + hW * (0.06 + (i + 0.5) * (0.66 / nPorts));
-      ctx.fillStyle = '#1a3050';
-      ctx.beginPath();
-      ctx.arc(px, portRow, Math.max(2, hW * 0.011), 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#4a6070'; ctx.lineWidth = 0.8; ctx.stroke();
+  // Portholes (only visible above waterline)
+  const portY = deckY + hD * 0.22;
+  if (portY < waterY - 4) {
+    const np = Math.max(4, Math.floor(hW / 32));
+    for (let i = 0; i < np; i++) {
+      const px = hx + hW * (0.06 + (i + 0.5) * (0.62 / np));
+      ctx.fillStyle = '#2a4060';
+      ctx.beginPath(); ctx.arc(px, portY, Math.max(2.5, hW * 0.010), 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#5a7888'; ctx.lineWidth = 0.7; ctx.stroke();
     }
   }
 
-  // ── Waterline marker ──
-  ctx.beginPath();
-  ctx.moveTo(0, waterY);
-  ctx.lineTo(W, waterY);
-  ctx.strokeStyle = '#4a9eff';
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([12, 6]);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  // Waterline dashes (white on sea background)
+  ctx.beginPath(); ctx.moveTo(0, waterY); ctx.lineTo(W, waterY);
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1.5;
+  ctx.setLineDash([12, 6]); ctx.stroke(); ctx.setLineDash([]);
 
   // WL label
-  ctx.fillStyle = '#3b9eff';
-  ctx.font = 'bold 11px system-ui,sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('WL', 5, waterY - 5);
+  ctx.fillStyle = '#0050b0'; ctx.font = 'bold 11px system-ui,sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('WL', 5, waterY - 4);
 
-  // ── Draft annotation ──
-  const ax  = hx + hW * 1.04 + 6;
+  // Draft annotation bracket
+  const ax  = hx + hW * 1.04 + 4;
   const mid = waterY + draftPx / 2;
-  ctx.strokeStyle = '#3b9eff'; ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#1565c0'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(ax + 4, waterY); ctx.lineTo(ax + 4, waterY + draftPx); ctx.stroke();
-  [waterY, waterY + draftPx].forEach(y => {
-    ctx.beginPath(); ctx.moveTo(ax, y); ctx.lineTo(ax + 8, y); ctx.stroke();
-  });
-  ctx.fillStyle = '#3b9eff'; ctx.font = 'bold 11px system-ui,sans-serif'; ctx.textAlign = 'left';
-  const [df, dl] = uDraft();
-  ctx.fillText(`T=${(draft * df).toFixed(2)} ${dl}`, ax + 12, mid + 4);
+  [waterY, waterY + draftPx].forEach(y => { ctx.beginPath(); ctx.moveTo(ax, y); ctx.lineTo(ax + 8, y); ctx.stroke(); });
 
-  // Length label
-  ctx.fillStyle = '#4a6878'; ctx.font = '11px system-ui,sans-serif'; ctx.textAlign = 'center';
+  const [tf, tl] = uT();
+  ctx.fillStyle = '#1565c0'; ctx.font = 'bold 11px system-ui,sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(`T=${(draft * tf).toFixed(2)} ${tl}`, ax + 12, mid + 4);
+
   const [lf, ll] = uL();
-  ctx.fillText(`L = ${(L * lf).toFixed(1)} ${ll}`, hx + hW / 2, H - 8);
+  ctx.fillStyle = '#6a8aaa'; ctx.font = '11px system-ui,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(`L = ${(S.L * lf).toFixed(1)} ${ll}`, hx + hW / 2, H - 5);
 }
 
-/* ─── DRAW GRAPH ─────────────────────────────────────────────────────────── */
+/* ─── DRAW GRAPH ─── */
 function drawGraph(points, cur) {
   const cv = setupCanvas('graph-canvas');
   if (!cv) return;
   const { ctx, W, H } = cv;
   if (!points.length) return;
 
-  const [lf] = uWt(); // weight factor
-  const [df] = uDraft(); // draft factor
+  const [wf, wl] = uW();
+  const [tf, tl] = uT();
+  const maxM = points[points.length - 1].mass * wf;
+  const maxD = Math.max(...points.map(p => p.draft * tf), 0.01);
 
-  const maxM = points[points.length - 1].mass * lf;
-  const maxD = Math.max(...points.map(p => p.draft * df), 0.01);
-
-  const pad = { t: 16, r: 22, b: 46, l: 55 };
+  const pad = { t: 14, r: 20, b: 43, l: 50 };
   const pW  = W - pad.l - pad.r;
   const pH  = H - pad.t - pad.b;
 
-  const toX = m => pad.l + ((m * lf) / maxM) * pW;
-  const toY = d => pad.t + pH - ((d * df) / maxD) * pH;
+  const toX = m => pad.l + (m * wf / maxM) * pW;
+  const toY = d => pad.t + pH - (d * tf / maxD) * pH;
 
-  // Grid
+  ctx.fillStyle = '#f8fbff'; ctx.fillRect(0, 0, W, H);
+
   const N = 5;
-  ctx.lineWidth = 1;
   for (let i = 1; i <= N; i++) {
-    ctx.strokeStyle = '#1a2d42';
-    ctx.beginPath(); ctx.moveTo(pad.l, toY(maxD / df * i / N)); ctx.lineTo(pad.l + pW, toY(maxD / df * i / N)); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(toX(maxM / lf * i / N), pad.t); ctx.lineTo(toX(maxM / lf * i / N), pad.t + pH); ctx.stroke();
+    ctx.strokeStyle = '#e4eef8'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad.l, toY(maxD / tf * i / N)); ctx.lineTo(pad.l + pW, toY(maxD / tf * i / N)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(toX(maxM / wf * i / N), pad.t); ctx.lineTo(toX(maxM / wf * i / N), pad.t + pH); ctx.stroke();
   }
 
-  // Axes
-  ctx.strokeStyle = '#2a4a62'; ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + pH); ctx.lineTo(pad.l + pW, pad.t + pH);
-  ctx.stroke();
+  ctx.strokeStyle = '#b8d0e8'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + pH); ctx.lineTo(pad.l + pW, pad.t + pH); ctx.stroke();
 
-  // Y labels
-  ctx.fillStyle = '#4a7a9b'; ctx.font = '11px system-ui,sans-serif'; ctx.textAlign = 'right'; ctx.lineWidth = 1;
+  ctx.fillStyle = '#6a8aaa'; ctx.font = '11px system-ui,sans-serif'; ctx.lineWidth = 1;
+  ctx.textAlign = 'right';
   for (let i = 0; i <= N; i++) {
-    const d = (maxD / N) * i;
+    const d = maxD * i / N;
     const y = pad.t + pH - (d / maxD) * pH;
-    ctx.strokeStyle = '#2a4050';
-    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l - 4, y); ctx.stroke();
+    ctx.strokeStyle = '#b0c8d8'; ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l - 4, y); ctx.stroke();
     ctx.fillText(d.toFixed(1), pad.l - 7, y + 4);
   }
-
-  // X labels
   ctx.textAlign = 'center';
   for (let i = 0; i <= N; i++) {
-    const m = (maxM / N) * i;
+    const m = maxM * i / N;
     const x = pad.l + (m / maxM) * pW;
-    const yb = pad.t + pH;
-    ctx.strokeStyle = '#2a4050';
-    ctx.beginPath(); ctx.moveTo(x, yb); ctx.lineTo(x, yb + 4); ctx.stroke();
-    ctx.fillText(Math.round(m), x, yb + 16);
+    ctx.strokeStyle = '#b0c8d8'; ctx.beginPath(); ctx.moveTo(x, pad.t + pH); ctx.lineTo(x, pad.t + pH + 4); ctx.stroke();
+    ctx.fillText(Math.round(m), x, pad.t + pH + 15);
   }
-
-  // Axis labels
-  const [, wl] = uWt(); const [, dl] = uDraft();
-  ctx.fillStyle = '#4a7a9b'; ctx.font = '11px system-ui,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillStyle = '#6a8aaa'; ctx.font = '11px system-ui,sans-serif'; ctx.textAlign = 'center';
   ctx.fillText(`${tx('graphMass')} (${wl})`, pad.l + pW / 2, H - 3);
-  ctx.save(); ctx.translate(13, pad.t + pH / 2); ctx.rotate(-Math.PI / 2);
-  ctx.fillText(`${tx('graphDraft')} (${dl})`, 0, 0); ctx.restore();
+  ctx.save(); ctx.translate(12, pad.t + pH / 2); ctx.rotate(-Math.PI / 2); ctx.fillText(`${tx('graphDraft')} (${tl})`, 0, 0); ctx.restore();
 
-  // Line (gradient blue)
-  const lineG = ctx.createLinearGradient(pad.l, 0, pad.l + pW, 0);
-  lineG.addColorStop(0, '#1a4a8a'); lineG.addColorStop(1, '#3b9eff');
-  ctx.beginPath(); ctx.strokeStyle = lineG; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
+  const lg = ctx.createLinearGradient(pad.l, 0, pad.l + pW, 0);
+  lg.addColorStop(0, '#90c0f0'); lg.addColorStop(1, '#1565c0');
+  ctx.beginPath(); ctx.strokeStyle = lg; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
   points.forEach((p, i) => i === 0 ? ctx.moveTo(toX(p.mass), toY(p.draft)) : ctx.lineTo(toX(p.mass), toY(p.draft)));
   ctx.stroke();
 
-  // Current point
   if (cur && isFinite(cur.draft)) {
-    const cx = toX(cur.mass); const cy = toY(cur.draft);
-    // Crosshairs
-    ctx.strokeStyle = 'rgba(255,120,60,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([5, 4]);
+    const cx = toX(cur.mass), cy = toY(cur.draft);
+    ctx.strokeStyle = 'rgba(200,80,20,0.18)'; ctx.lineWidth = 1; ctx.setLineDash([5, 4]);
     ctx.beginPath(); ctx.moveTo(cx, pad.t); ctx.lineTo(cx, pad.t + pH); ctx.moveTo(pad.l, cy); ctx.lineTo(pad.l + pW, cy); ctx.stroke();
     ctx.setLineDash([]);
-    // Dot
-    ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fillStyle = '#ff6a30'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-    // Label
-    const nr = cx > pad.l + pW * 0.62;
-    ctx.fillStyle = '#ff8050'; ctx.font = 'bold 10px system-ui,sans-serif'; ctx.textAlign = nr ? 'right' : 'left';
-    ctx.fillText(`${(cur.mass * lf).toFixed(0)} ${wl} / ${(cur.draft * df).toFixed(2)} ${dl}`, nr ? cx - 11 : cx + 11, cy - 10);
+    ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fillStyle = '#e05020'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    const nr = cx > pad.l + pW * 0.6;
+    ctx.fillStyle = '#c84010'; ctx.font = 'bold 10px system-ui,sans-serif'; ctx.textAlign = nr ? 'right' : 'left';
+    ctx.fillText(`${(cur.mass * wf).toFixed(0)} ${wl} / ${(cur.draft * tf).toFixed(2)} ${tl}`, nr ? cx - 11 : cx + 11, cy - 10);
   }
 }
 
-/* ─── RESULTS ────────────────────────────────────────────────────────────── */
-function updateResults(res) {
-  const [df, dl] = uDraft();
-  const [vf, vl] = uVol();
-  const [wf, wl] = uWt();
-  document.getElementById('result-draft').textContent  = (res.draft * df).toFixed(3) + ' ' + dl;
-  document.getElementById('result-volume').textContent = (res.dispVolume * vf).toFixed(1) + ' ' + vl;
-  document.getElementById('result-weight').textContent = (res.totalWeightTons * wf).toFixed(1) + ' ' + wl;
-
-  const warns = [];
-  if (res.draft > S.L) warns.push(tx('warnL'));
-  if (res.draft > 50)  warns.push(tx('warn50'));
-  const el = document.getElementById('alert-warning');
-  if (warns.length) { el.innerHTML = warns.join('<br>'); el.style.display = 'block'; }
-  else el.style.display = 'none';
+/* ─── FIELD HELPER ─── (update number input + slider + display span in display units) */
+function setField(inputId, sliderId, dispId, metricVal, unit, minM, maxM, stepM) {
+  const [f, l] = unit;
+  const v  = (metricVal * f).toFixed(f >= 3 ? 3 : 1);
+  document.getElementById(inputId).value  = v;
+  const sl = document.getElementById(sliderId);
+  sl.min   = (minM  * f).toFixed(f >= 3 ? 3 : 1);
+  sl.max   = (maxM  * f).toFixed(f >= 3 ? 3 : 1);
+  sl.step  = (stepM * f).toFixed(f >= 3 ? 4 : 1);
+  sl.value = v;
+  if (dispId) document.getElementById(dispId).textContent = v + ' ' + l;
 }
 
-/* ─── APPLY TRANSLATIONS ─────────────────────────────────────────────────── */
-function applyTranslations() {
-  document.getElementById('hdr-title').textContent = tx('appTitle');
-  document.getElementById('hdr-sub').textContent   = tx('appSub');
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const k = el.getAttribute('data-i18n');
-    el.innerHTML = tx(k);
-  });
-  // Tooltips
+/* ─── APPLY UNITS — updates ALL fields AND button states ─── */
+function applyUnits() {
+  setField('input-L',      'slider-L',      'disp-L',      S.L,      uL(), 5,   300,  0.5);
+  setField('input-B',      'slider-B',      'disp-B',      S.B,      uL(), 1,   80,   0.5);
+  setField('input-wShip',  'slider-wShip',  'disp-wShip',  S.wShip,  uW(), 0,   10000, 10);
+  setField('input-wCargo', 'slider-wCargo', 'disp-wCargo', S.wCargo, uW(), 0,   5000,  10);
+  setField('input-rho',    'slider-rho',    'disp-rho',    S.rho,    uR(), 900, 1100,  1);
+  document.getElementById('unit-L').textContent   = uL()[1];
+  document.getElementById('unit-B').textContent   = uL()[1];
+  document.getElementById('unit-rho').textContent = uR()[1];
+  // Button visual state — explicit toggle
+  document.getElementById('btn-m').classList.toggle('active', S.units === 'metric');
+  document.getElementById('btn-i').classList.toggle('active', S.units === 'imperial');
+}
+
+/* ─── APPLY LANG ─── */
+function applyLang() {
+  document.getElementById('hdr-title').textContent = tx('hdrTitle');
+  document.getElementById('hdr-sub').textContent   = tx('hdrSub');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = tx(el.getAttribute('data-i18n')); });
   document.getElementById('tip-L').textContent   = tx('tipL');
   document.getElementById('tip-B').textContent   = tx('tipB');
   document.getElementById('tip-ws').textContent  = tx('tipWs');
   document.getElementById('tip-wc').textContent  = tx('tipWc');
   document.getElementById('tip-rho').textContent = tx('tipRho');
-  // Concept map labels
-  const cm = { 'cm-wship': 'cmWship', 'cm-wcargo': 'cmWcargo', 'cm-wtotal': 'cmWtotal',
-               'cm-rho': 'cmRho', 'cm-volume': 'cmVolume', 'cm-draft': 'cmDraft' };
-  Object.entries(cm).forEach(([id, key]) => {
-    const el = document.getElementById(id); if (el) el.textContent = tx(key);
-  });
-  // Lang buttons
+  const cmMap = { 'cm-wship':'cmWship','cm-wcargo':'cmWcargo','cm-wtotal':'cmWtotal','cm-rho':'cmRho','cm-vol':'cmVol','cm-draft':'cmDraft','cm-L':'cmL','cm-B':'cmB' };
+  Object.entries(cmMap).forEach(([id, k]) => { const el = document.getElementById(id); if (el) el.textContent = tx(k); });
   document.getElementById('btn-sk').classList.toggle('active', S.lang === 'sk');
   document.getElementById('btn-en').classList.toggle('active', S.lang === 'en');
 }
 
-/* ─── APPLY UNITS (update display values) ────────────────────────────────── */
-function applyUnits() {
-  const [lf, ll] = uL();
-  const [wf, wl] = uWt();
-  const [rf, rl] = uRho();
-
-  // Unit tags
-  document.getElementById('unit-L').textContent  = ll;
-  document.getElementById('unit-B').textContent  = ll;
-  document.getElementById('unit-rho').textContent = rl;
-
-  // Update number inputs and sliders to display units
-  function setField(inputId, sliderId, dispId, metricVal, factor, unit, min, max, step, decimals) {
-    const v = (metricVal * factor).toFixed(decimals);
-    document.getElementById(inputId).value = v;
-    const s = document.getElementById(sliderId);
-    s.min  = (min  * factor).toFixed(decimals);
-    s.max  = (max  * factor).toFixed(decimals);
-    s.step = (step * factor).toFixed(decimals);
-    s.value = v;
-    document.getElementById(dispId).textContent = v + ' ' + unit;
-  }
-  setField('input-L', 'slider-L', 'disp-L', S.L, lf, ll, 5, 300, 0.5, 1);
-  setField('input-B', 'slider-B', 'disp-B', S.B, lf, ll, 1, 80,  0.5, 1);
-
-  // Weights
-  const wvS  = (metricVal, max) => {
-    return { v: (metricVal * wf).toFixed(1), min: 0, max: (max * wf).toFixed(0), step: (10 * wf).toFixed(1) };
-  };
-  const wsv = wvS(S.wShip, 10000);
-  const wcv = wvS(S.wCargo, 5000);
-  ['wShip','wCargo'].forEach((k, idx) => {
-    const cfg = idx === 0 ? wsv : wcv;
-    document.getElementById(`input-w${k[0].toUpperCase()+k.slice(1)}`).value = cfg.v; // ugh
-  });
-  // easier directly:
-  document.getElementById('input-wShip').value = wsv.v;
-  document.getElementById('slider-wShip').value = wsv.v;
-  document.getElementById('slider-wShip').max   = wsv.max;
-  document.getElementById('disp-wShip').textContent = wsv.v + ' ' + wl;
-
-  document.getElementById('input-wCargo').value = wcv.v;
-  document.getElementById('slider-wCargo').value = wcv.v;
-  document.getElementById('slider-wCargo').max   = wcv.max;
-  document.getElementById('disp-wCargo').textContent = wcv.v + ' ' + wl;
-
-  // Rho
-  const rV = (S.rho * rf).toFixed(1);
-  document.getElementById('input-rho').value  = rV;
-  document.getElementById('slider-rho').min   = (900 * rf).toFixed(1);
-  document.getElementById('slider-rho').max   = (1100 * rf).toFixed(1);
-  document.getElementById('slider-rho').step  = (1 * rf).toFixed(3);
-  document.getElementById('slider-rho').value = rV;
-  document.getElementById('disp-rho').textContent = rV + ' ' + rl;
-
-  // Unit buttons
-  document.getElementById('btn-metric').classList.toggle('active',   S.units === 'metric');
-  document.getElementById('btn-imperial').classList.toggle('active', S.units === 'imperial');
-}
-
-/* ─── READ INPUTS (display → metric) ─────────────────────────────────────── */
+/* ─── READ INPUTS from DOM (display units → metric) ─── */
 function readInputs() {
-  const [lf]  = uL();
-  const [wf]  = uWt();
-  const [rf]  = uRho();
-
-  const L      = parseFloat(document.getElementById('input-L').value) / lf;
-  const B      = parseFloat(document.getElementById('input-B').value) / lf;
-  const wShip  = parseFloat(document.getElementById('input-wShip').value) / wf;
-  const wCargo = parseFloat(document.getElementById('input-wCargo').value) / wf;
-  const rho    = parseFloat(document.getElementById('input-rho').value) / rf;
-
+  const parse = id => parseFloat(document.getElementById(id).value);
+  const L      = parse('input-L')      / uL()[0];
+  const B      = parse('input-B')      / uL()[0];
+  const wShip  = parse('input-wShip')  / uW()[0];
+  const wCargo = parse('input-wCargo') / uW()[0];
+  const rho    = parse('input-rho')    / uR()[0];
   const errs = [];
   if (!isFinite(L)      || L      <= 0) errs.push('L > 0');
   if (!isFinite(B)      || B      <= 0) errs.push('B > 0');
   if (!isFinite(wShip)  || wShip  <  0) errs.push('W_ship ≥ 0');
   if (!isFinite(wCargo) || wCargo <  0) errs.push('W_cargo ≥ 0');
   if (!isFinite(rho)    || rho    <= 0) errs.push('ρ > 0');
-  return { L, B, wShip, wCargo, rho, errs, valid: errs.length === 0 };
+  return { L, B, wShip, wCargo, rho, errs, valid: !errs.length };
 }
 
-/* ─── MASTER UPDATE ──────────────────────────────────────────────────────── */
+/* ─── MASTER UPDATE ─── */
 function updateAll() {
   const inp = readInputs();
-  const errEl = document.getElementById('alert-error');
-  if (!inp.valid) {
-    errEl.textContent = '⚠ Invalid input: ' + inp.errs.join(', ');
-    errEl.style.display = 'block';
-    return;
-  }
+  const errEl = document.getElementById('alert-err');
+  if (!inp.valid) { errEl.textContent = '⚠ ' + inp.errs.join(', '); errEl.style.display = 'block'; return; }
   errEl.style.display = 'none';
   Object.assign(S, { L: inp.L, B: inp.B, wShip: inp.wShip, wCargo: inp.wCargo, rho: inp.rho });
-
-  const res    = computeDraft();
-  const points = computeCurve();
-  const cur    = { mass: res.totalWeightTons, draft: res.draft };
-
-  updateResults(res);
-  drawShipPreview(res, S);
-  drawGraph(points, cur);
+  const res = compute();
+  // Results
+  const [tf, tl] = uT(), [vf, vl] = uV(), [wf, wl] = uW();
+  document.getElementById('res-draft').textContent = (res.draft * tf).toFixed(3) + ' ' + tl;
+  document.getElementById('res-vol').textContent   = (res.vol   * vf).toFixed(1) + ' ' + vl;
+  document.getElementById('res-wt').textContent    = (res.totalT * wf).toFixed(1) + ' ' + wl;
+  const warns = [];
+  if (res.draft > S.L) warns.push(tx('warnL'));
+  if (res.draft > 50)  warns.push(tx('warn50'));
+  const warnEl = document.getElementById('alert-warn');
+  if (warns.length) { warnEl.innerHTML = warns.join('<br>'); warnEl.style.display = 'block'; }
+  else warnEl.style.display = 'none';
+  // Draw
+  drawShip(res);
+  drawGraph(computeCurve(), { mass: res.totalT, draft: res.draft });
 }
 
-/* ─── SLIDER ↔ NUMBER SYNC ────────────────────────────────────────────────── */
-function bindHSlider(sliderId, inputId, dispId, unitFn) {
+/* ─── SLIDER BINDING ─── */
+function bindH(sliderId, inputId, dispId, unitFn) {
   const sl = document.getElementById(sliderId);
   const np = document.getElementById(inputId);
   const dp = document.getElementById(dispId);
-  const refresh = v => { dp.textContent = v + ' ' + unitFn()[1]; };
-  sl.addEventListener('input', () => { np.value = sl.value; refresh(sl.value); updateAll(); });
-  np.addEventListener('input', () => {
-    const v = parseFloat(np.value); if (isFinite(v)) { sl.value = v; refresh(v); }
-    updateAll();
-  });
+  sl.addEventListener('input', () => { np.value = sl.value; dp.textContent = sl.value + ' ' + unitFn()[1]; updateAll(); });
+  np.addEventListener('input', () => { const v = parseFloat(np.value); if (isFinite(v)) { sl.value = v; dp.textContent = v + ' ' + unitFn()[1]; } updateAll(); });
 }
-
-function bindVSlider(sliderId, inputId, dispId, unitFn) {
+function bindV(sliderId, inputId, dispId, unitFn) {
   const sl = document.getElementById(sliderId);
   const np = document.getElementById(inputId);
   const dp = document.getElementById(dispId);
-  const refresh = v => { dp.textContent = parseFloat(v).toFixed(1) + ' ' + unitFn()[1]; };
-  sl.addEventListener('input', () => { np.value = sl.value; refresh(sl.value); updateAll(); });
-  np.addEventListener('input', () => {
-    const v = parseFloat(np.value); if (isFinite(v)) { sl.value = v; refresh(v); }
-    updateAll();
-  });
+  sl.addEventListener('input', () => { np.value = sl.value; dp.textContent = parseFloat(sl.value).toFixed(1) + ' ' + unitFn()[1]; updateAll(); });
+  np.addEventListener('input', () => { const v = parseFloat(np.value); if (isFinite(v)) { sl.value = v; dp.textContent = v.toFixed(1) + ' ' + unitFn()[1]; } updateAll(); });
 }
 
-/* ─── LANG / UNIT SWITCH ─────────────────────────────────────────────────── */
+/* ─── PUBLIC STATE CHANGERS ─── */
 function setLang(l) {
   S.lang = l;
-  applyTranslations();
+  applyLang();
   updateAll();
 }
 
 function setUnits(u) {
+  // Capture current metric values before switching
+  const inp = readInputs();
+  if (inp.valid) Object.assign(S, { L: inp.L, B: inp.B, wShip: inp.wShip, wCargo: inp.wCargo, rho: inp.rho });
   S.units = u;
-  applyUnits();
+  applyUnits();   // updates fields + button states
   updateAll();
 }
 
-/* ─── RESET ──────────────────────────────────────────────────────────────── */
 function resetDefaults() {
   Object.assign(S, DEFAULTS);
   S.units = 'metric';
-  S.lang  = S.lang; // keep language
   applyUnits();
-  applyTranslations();
+  applyLang();
   updateAll();
 }
 
-/* ─── ACADEMIC SECTION TOGGLE ────────────────────────────────────────────── */
-function toggleAcademic() {
-  const hdr  = document.getElementById('academic-header');
-  const body = document.getElementById('academic-body');
-  hdr.classList.toggle('open');
-  body.classList.toggle('open');
+function toggleAc() {
+  document.getElementById('ac-hdr').classList.toggle('open');
+  document.getElementById('ac-body').classList.toggle('open');
 }
 
-/* ─── SETUP EVENTS ───────────────────────────────────────────────────────── */
-function setupEvents() {
-  bindHSlider('slider-L',   'input-L',   'disp-L',   uL);
-  bindHSlider('slider-B',   'input-B',   'disp-B',   uL);
-  bindHSlider('slider-rho', 'input-rho', 'disp-rho', uRho);
-  bindVSlider('slider-wShip',  'input-wShip',  'disp-wShip',  uWt);
-  bindVSlider('slider-wCargo', 'input-wCargo', 'disp-wCargo', uWt);
-  window.addEventListener('resize', updateAll);
-}
-
-/* ─── INIT ───────────────────────────────────────────────────────────────── */
+/* ─── INIT ─── */
 document.addEventListener('DOMContentLoaded', () => {
-  setupEvents();
-  applyTranslations();
+  bindH('slider-L',      'input-L',      'disp-L',      uL);
+  bindH('slider-B',      'input-B',      'disp-B',      uL);
+  bindH('slider-rho',    'input-rho',    'disp-rho',    uR);
+  bindV('slider-wShip',  'input-wShip',  'disp-wShip',  uW);
+  bindV('slider-wCargo', 'input-wCargo', 'disp-wCargo', uW);
+  window.addEventListener('resize', updateAll);
+  applyLang();
+  applyUnits();
   requestAnimationFrame(updateAll);
 });
 </script>
-
 </body>
 </html>
