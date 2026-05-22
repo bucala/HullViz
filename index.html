@@ -386,33 +386,38 @@ function drawBoat(res) {
 
   ctx.save(); ctx.clip();
 
-  // Topsides (creamy white)
+  // Topsides — warm off-white, slight weathering toward waterline
   const tG = ctx.createLinearGradient(0, yBow, 0, WL);
-  tG.addColorStop(0, '#f8f4ec'); tG.addColorStop(0.55, '#ede6d6'); tG.addColorStop(1, '#d5ccbc');
+  tG.addColorStop(0, '#f4f0e8'); tG.addColorStop(0.45, '#e8e2d4'); tG.addColorStop(1, '#d6cebe');
   ctx.fillStyle = tG; ctx.fillRect(hx0 - 5, yBow - 10, hw + 14, WL - yBow + 10);
 
-  // Antifouling
+  // Subtle shadow at waterline area on topsides
+  const wlSh = ctx.createLinearGradient(0, WL - 18, 0, WL);
+  wlSh.addColorStop(0, 'rgba(0,0,0,0)'); wlSh.addColorStop(1, 'rgba(0,0,0,0.06)');
+  ctx.fillStyle = wlSh; ctx.fillRect(hx0 - 5, WL - 18, hw + 14, 18);
+
+  // Antifouling — slightly desaturated, more paint-like
   const aG = ctx.createLinearGradient(0, WL, 0, hBot);
-  aG.addColorStop(0, '#bf2018'); aG.addColorStop(1, '#781008');
+  aG.addColorStop(0, '#b41e16'); aG.addColorStop(0.6, '#921410'); aG.addColorStop(1, '#6e0e0a');
   ctx.fillStyle = aG; ctx.fillRect(hx0 - 5, WL, hw + 14, draftPx + 6);
 
-  // Boot-topping (3 stripes)
-  ctx.fillStyle = '#1a1508'; ctx.fillRect(hx0 - 5, WL - 3, hw + 14, 2.5);
-  ctx.fillStyle = '#c8a000'; ctx.fillRect(hx0 - 5, WL - 6.5, hw + 14, 3.2);
-  ctx.fillStyle = '#1a1508'; ctx.fillRect(hx0 - 5, WL - 9.5, hw + 14, 2);
+  // Boot-topping
+  ctx.fillStyle = 'rgba(18,14,6,0.75)'; ctx.fillRect(hx0 - 5, WL - 3, hw + 14, 2.2);
+  ctx.fillStyle = 'rgba(188,152,0,0.80)'; ctx.fillRect(hx0 - 5, WL - 6, hw + 14, 2.8);
+  ctx.fillStyle = 'rgba(18,14,6,0.65)'; ctx.fillRect(hx0 - 5, WL - 9, hw + 14, 1.8);
 
   ctx.restore(); // end hull clip
 
-  // Hull outline
-  ctx.strokeStyle = '#28200e'; ctx.lineWidth = 1.8; ctx.stroke();
+  // Hull outline — thin, semi-transparent, not a cartoon stroke
+  ctx.strokeStyle = 'rgba(30,22,8,0.38)'; ctx.lineWidth = 1.1; ctx.stroke();
 
   // ── DECK BREAK ──
   ctx.beginPath();
   ctx.moveTo(hx(xFoEnd), yFo + 1); ctx.lineTo(hx(xFoEnd), yMain + 1);
-  ctx.strokeStyle = '#4a3a22'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.strokeStyle = 'rgba(60,46,26,0.32)'; ctx.lineWidth = 1.2; ctx.stroke();
 
-  // ── SHEER STRAKE (dark shadow line below sheer) ──
-  ctx.strokeStyle = 'rgba(55,40,18,0.32)'; ctx.lineWidth = 4;
+  // ── SHEER STRAKE — subtle shadow, not a bold line ──
+  ctx.strokeStyle = 'rgba(55,40,18,0.13)'; ctx.lineWidth = 3.5;
   ctx.beginPath();
   ctx.moveTo(hx(0.018), yBow + 9);
   ctx.bezierCurveTo(hx(0.04), yBow + 5, hx(0.14), yFo + 5, hx(xFoEnd), yFo + 5);
@@ -429,30 +434,31 @@ function drawBoat(res) {
   for (let i = 0; i < 8; i++) {
     const px = hx(xFoEnd + 0.04 + i * 0.085);
     if (px > hx(0.83)) break;
-    // Outer brass ring
-    ctx.beginPath(); ctx.arc(px, pY, pR + 1.5, 0, Math.PI * 2);
-    ctx.fillStyle = '#c8a440'; ctx.fill();
-    // Glass
+    // Subtle ring (worn brass, not cartoon gold)
+    ctx.beginPath(); ctx.arc(px, pY, pR + 1.2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(165,128,40,0.55)'; ctx.fill();
+    // Glass — dark, slightly reflective
+    const pgR = ctx.createRadialGradient(px - pR*0.2, pY - pR*0.2, 0, px, pY, pR);
+    pgR.addColorStop(0, 'rgba(50,80,110,0.85)');
+    pgR.addColorStop(1, 'rgba(18,34,52,0.92)');
     ctx.beginPath(); ctx.arc(px, pY, pR, 0, Math.PI * 2);
-    ctx.fillStyle = '#1e3850'; ctx.fill();
-    // Inner shadow
-    ctx.beginPath(); ctx.arc(px, pY, pR * 0.75, 0, Math.PI * 2);
-    ctx.fillStyle = '#162e48'; ctx.fill();
-    // Highlight
-    ctx.beginPath(); ctx.arc(px - pR * 0.32, pY - pR * 0.32, pR * 0.42, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(200,220,255,0.35)'; ctx.fill();
+    ctx.fillStyle = pgR; ctx.fill();
+    // Tiny highlight only
+    ctx.beginPath(); ctx.arc(px - pR * 0.28, pY - pR * 0.28, pR * 0.30, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(180,210,255,0.20)'; ctx.fill();
   }
 
-  // ── DECK PLANKING (subtle) ──
-  ctx.strokeStyle = 'rgba(150,125,85,0.10)'; ctx.lineWidth = 0.6;
-  for (let i = 2; i <= 8; i++) {
-    const dy = yMain + i * (WL - yMain) / 9.5;
+  // ── DECK PLANKING ──
+  ctx.strokeStyle = 'rgba(130,105,65,0.07)'; ctx.lineWidth = 0.5;
+  for (let i = 2; i <= 7; i++) {
+    const dy = yMain + i * (WL - yMain) / 8.5;
     ctx.beginPath(); ctx.moveTo(hx(xFoEnd + 0.008), dy); ctx.lineTo(hx(xSternR + 0.02), dy); ctx.stroke();
   }
 
   // ── MAIN DECK RAILING ──
-  ctx.strokeStyle = '#a09268'; ctx.lineWidth = 1.1;
+  ctx.strokeStyle = 'rgba(140,120,80,0.45)'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(hx(xFoEnd + 0.006), yMain - 3); ctx.lineTo(hx(0.83), yMain - 3); ctx.stroke();
+  ctx.strokeStyle = 'rgba(140,120,80,0.30)'; ctx.lineWidth = 0.8;
   for (let i = 0; i < 9; i++) {
     const sx = hx(xFoEnd + 0.012 + i * 0.074);
     if (sx > hx(0.82)) break;
@@ -460,31 +466,29 @@ function drawBoat(res) {
   }
 
   // ── FO'C'SLE ──
-  // Railing
-  ctx.strokeStyle = '#a09268'; ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(140,120,80,0.38)'; ctx.lineWidth = 0.9;
   ctx.beginPath(); ctx.moveTo(hx(0.03), yFo - 3); ctx.lineTo(hx(xFoEnd - 0.01), yFo - 3); ctx.stroke();
+  ctx.strokeStyle = 'rgba(140,120,80,0.25)'; ctx.lineWidth = 0.7;
   for (let i = 0; i < 3; i++) {
     const sx = hx(0.03 + i * 0.062);
     ctx.beginPath(); ctx.moveTo(sx, yFo - 3); ctx.lineTo(sx, yFo + 6); ctx.stroke();
   }
   // Anchor windlass
   ctx.save(); ctx.translate(hx(0.08), yFo + 4);
-  ctx.fillStyle = '#908060'; ctx.beginPath(); ctx.ellipse(0, 0, 8, 4.5, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#504030'; ctx.lineWidth = 1; ctx.stroke();
-  ctx.fillStyle = '#b0a080'; ctx.fillRect(-8, -1.5, 16, 3);
-  ctx.strokeStyle = '#504030'; ctx.stroke();
+  ctx.fillStyle = 'rgba(130,112,82,0.80)';
+  ctx.beginPath(); ctx.ellipse(0, 0, 8, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(165,148,108,0.70)'; ctx.fillRect(-8, -1.5, 16, 3);
   ctx.restore();
   // Hawse pipe
   ctx.beginPath(); ctx.ellipse(hx(0.035), yFo + (WL - yFo) * 0.50, 3.5, 2.5, -0.25, 0, Math.PI * 2);
-  ctx.fillStyle = '#1a1408'; ctx.fill();
-  // Chain (hint)
-  ctx.strokeStyle = 'rgba(80,70,50,0.6)'; ctx.lineWidth = 1.5;
+  ctx.fillStyle = 'rgba(22,18,8,0.65)'; ctx.fill();
+  // Chain
+  ctx.strokeStyle = 'rgba(80,70,50,0.28)'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(hx(0.035), yFo + (WL - yFo) * 0.55);
   ctx.bezierCurveTo(hx(0.02), yFo + (WL - yFo) * 0.7, hx(0.01), WL - 4, hx(0.005), WL - 1);
   ctx.stroke();
   // Fo'c'sle hatch
-  ctx.fillStyle = '#c0aa88'; rr(ctx, hx(0.10), yFo + 3, hw * 0.055, 5, 1); ctx.fill();
-  ctx.strokeStyle = '#7a6040'; ctx.lineWidth = 0.8; ctx.stroke();
+  ctx.fillStyle = 'rgba(185,162,120,0.60)'; rr(ctx, hx(0.10), yFo + 3, hw * 0.055, 5, 1); ctx.fill();
 
   // ── WHEELHOUSE LOWER ──
   const whX0 = hx(0.37), whX1 = hx(0.76);
@@ -502,8 +506,8 @@ function drawBoat(res) {
   ctx.lineTo(whX0, whYm); ctx.lineTo(whX0 - 2, whYm + 3);
   ctx.closePath();
   const wh1G = ctx.createLinearGradient(whX0, 0, whX1, 0);
-  wh1G.addColorStop(0, '#d5cdc0'); wh1G.addColorStop(0.5, '#e8e0d0'); wh1G.addColorStop(1, '#ccc4b4');
-  ctx.fillStyle = wh1G; ctx.fill(); ctx.strokeStyle = '#5a4830'; ctx.lineWidth = 1.2; ctx.stroke();
+  wh1G.addColorStop(0, '#cec8bc'); wh1G.addColorStop(0.5, '#e0d9ca'); wh1G.addColorStop(1, '#c8c2b4');
+  ctx.fillStyle = wh1G; ctx.fill(); ctx.strokeStyle = 'rgba(72,56,34,0.28)'; ctx.lineWidth = 0.8; ctx.stroke();
 
   // Lower windows (4)
   const lw_h = wh1H * 0.40, lw_y = whYb - wh1H * 0.72;
@@ -511,14 +515,14 @@ function drawBoat(res) {
   for (let i = 0; i < lw_n; i++) {
     const wx = whX0 + lw_sp * (i + 0.24), ww = lw_sp * 0.64;
     const wG = ctx.createLinearGradient(wx, lw_y, wx, lw_y + lw_h);
-    wG.addColorStop(0, 'rgba(80,130,190,0.60)'); wG.addColorStop(1, 'rgba(40,80,140,0.70)');
+    wG.addColorStop(0, 'rgba(55,90,138,0.45)'); wG.addColorStop(1, 'rgba(28,55,100,0.55)');
     rr(ctx, wx, lw_y, ww, lw_h, 2); ctx.fillStyle = wG; ctx.fill();
-    ctx.strokeStyle = '#8a7050'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = 'rgba(100,82,54,0.30)'; ctx.lineWidth = 0.7; ctx.stroke();
     // Frame divider
     ctx.beginPath(); ctx.moveTo(wx + ww / 2, lw_y); ctx.lineTo(wx + ww / 2, lw_y + lw_h);
-    ctx.strokeStyle = '#7a6040'; ctx.lineWidth = 0.7; ctx.stroke();
-    // Reflection
-    ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillRect(wx + 2, lw_y + 2, ww * 0.30, lw_h - 4);
+    ctx.strokeStyle = 'rgba(90,72,44,0.22)'; ctx.lineWidth = 0.6; ctx.stroke();
+    // Subtle reflection
+    ctx.fillStyle = 'rgba(255,255,255,0.10)'; ctx.fillRect(wx + 2, lw_y + 2, ww * 0.28, lw_h - 4);
   }
 
   // ── WHEELHOUSE UPPER (bridge) ──
@@ -528,14 +532,15 @@ function drawBoat(res) {
   ctx.lineTo(bdX1 - 3, whYt + 2); ctx.lineTo(bdX0 + 3, whYt + 2);
   ctx.closePath();
   const wh2G = ctx.createLinearGradient(bdX0, 0, bdX1, 0);
-  wh2G.addColorStop(0, '#ccc4b4'); wh2G.addColorStop(0.5, '#dfd8c8'); wh2G.addColorStop(1, '#c4bcac');
-  ctx.fillStyle = wh2G; ctx.fill(); ctx.strokeStyle = '#5a4830'; ctx.lineWidth = 1.2; ctx.stroke();
+  wh2G.addColorStop(0, '#c6c0b2'); wh2G.addColorStop(0.5, '#d8d2c4'); wh2G.addColorStop(1, '#beb8aa');
+  ctx.fillStyle = wh2G; ctx.fill(); ctx.strokeStyle = 'rgba(72,56,34,0.25)'; ctx.lineWidth = 0.8; ctx.stroke();
 
   // Bridge wings
   [[bdX0, bdX0 - 15], [bdX1, bdX1 + 15]].forEach(([bx, tx2]) => {
     ctx.beginPath();
     ctx.moveTo(bx, whYm - 5); ctx.lineTo(tx2, whYm - 2); ctx.lineTo(tx2, whYm + 3); ctx.lineTo(bx, whYm + 1);
-    ctx.closePath(); ctx.fillStyle = '#d0c8b8'; ctx.fill(); ctx.strokeStyle = '#5a4830'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.closePath(); ctx.fillStyle = 'rgba(205,198,184,0.85)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(72,56,34,0.20)'; ctx.lineWidth = 0.7; ctx.stroke();
   });
 
   // Bridge windows (5 wider)
@@ -544,17 +549,17 @@ function drawBoat(res) {
   for (let i = 0; i < bw_n; i++) {
     const wx = bdX0 + 4 + bw_sp * (i + 0.14), ww = bw_sp * 0.74;
     const bwG = ctx.createLinearGradient(wx, bw_y, wx, bw_y + bw_h);
-    bwG.addColorStop(0, 'rgba(100,155,210,0.50)'); bwG.addColorStop(1, 'rgba(60,110,170,0.60)');
+    bwG.addColorStop(0, 'rgba(70,115,168,0.38)'); bwG.addColorStop(1, 'rgba(40,80,130,0.48)');
     rr(ctx, wx, bw_y, ww, bw_h, 2); ctx.fillStyle = bwG; ctx.fill();
-    ctx.strokeStyle = '#7a6040'; ctx.lineWidth = 0.9; ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillRect(wx + 2, bw_y + 2, ww * 0.36, bw_h - 4);
+    ctx.strokeStyle = 'rgba(90,72,44,0.25)'; ctx.lineWidth = 0.7; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.09)'; ctx.fillRect(wx + 2, bw_y + 2, ww * 0.32, bw_h - 4);
   }
 
   // Bridge roof (slight overhang front/back)
   ctx.beginPath();
   ctx.moveTo(bdX0 + 2, whYt + 2); ctx.lineTo(bdX1 - 2, whYt + 2);
   ctx.lineTo(bdX1 + 6, whYt - 1); ctx.lineTo(bdX0 - 6, whYt - 1);
-  ctx.closePath(); ctx.fillStyle = '#b8b0a0'; ctx.fill(); ctx.strokeStyle = '#5a4830'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.closePath(); ctx.fillStyle = '#b2aa9a'; ctx.fill(); ctx.strokeStyle = 'rgba(72,56,34,0.22)'; ctx.lineWidth = 0.7; ctx.stroke();
 
   // ── FUNNEL ──
   const fnCX = hx(0.81), fnW = hw * 0.040;
@@ -565,14 +570,14 @@ function drawBoat(res) {
   ctx.lineTo(fnCX + fnW * 0.36, fnYt); ctx.lineTo(fnCX - fnW * 0.36, fnYt);
   ctx.closePath();
   const fnG = ctx.createLinearGradient(fnCX - fnW, 0, fnCX + fnW, 0);
-  fnG.addColorStop(0, '#c03810'); fnG.addColorStop(0.45, '#e05518'); fnG.addColorStop(1, '#9c2808');
-  ctx.fillStyle = fnG; ctx.fill(); ctx.strokeStyle = '#6a1e04'; ctx.lineWidth = 1; ctx.stroke();
-  // White band
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  ctx.fillRect(fnCX - fnW * 0.44, fnYt + fnH * 0.28, fnW * 0.88, fnH * 0.15);
-  // Black cap
+  fnG.addColorStop(0, '#a83010'); fnG.addColorStop(0.45, '#c84a16'); fnG.addColorStop(1, '#8c2408');
+  ctx.fillStyle = fnG; ctx.fill(); ctx.strokeStyle = 'rgba(80,22,4,0.35)'; ctx.lineWidth = 0.8; ctx.stroke();
+  // Subtle worn white band
+  ctx.fillStyle = 'rgba(240,234,220,0.35)';
+  ctx.fillRect(fnCX - fnW * 0.44, fnYt + fnH * 0.28, fnW * 0.88, fnH * 0.14);
+  // Sooty cap
   ctx.beginPath(); ctx.ellipse(fnCX, fnYt, fnW * 0.38, 3.5, 0, 0, Math.PI * 2);
-  ctx.fillStyle = '#141010'; ctx.fill();
+  ctx.fillStyle = 'rgba(18,14,12,0.88)'; ctx.fill();
 
   // ── FORWARD MAST ──
   const mCX    = hx(0.27);
@@ -587,55 +592,51 @@ function drawBoat(res) {
   ctx.closePath();
   const mG = ctx.createLinearGradient(mCX - mW2, 0, mCX + mW2, 0);
   mG.addColorStop(0, '#908070'); mG.addColorStop(0.4, '#c0b49e'); mG.addColorStop(1, '#908070');
-  ctx.fillStyle = mG; ctx.fill(); ctx.strokeStyle = '#605040'; ctx.lineWidth = 0.8; ctx.stroke();
+  ctx.fillStyle = mG; ctx.fill();
+  // No hard outline on mast — shape alone defines it
 
-  // Mast platform / crow's nest (small)
+  // Mast platform
   const cpY = mBaseY - freePx * 1.4;
-  ctx.fillStyle = '#a09070'; ctx.fillRect(mCX - 7, cpY - 3, 14, 4);
-  ctx.strokeStyle = '#606050'; ctx.lineWidth = 0.8; ctx.stroke();
+  ctx.fillStyle = 'rgba(148,132,100,0.65)'; ctx.fillRect(mCX - 7, cpY - 3, 14, 4);
 
   // Spreaders
   const ctY2 = mBaseY - freePx * 1.62;
   const ctHW  = hw * 0.090;
   ctx.beginPath(); ctx.moveTo(mCX - ctHW, ctY2); ctx.lineTo(mCX + ctHW, ctY2);
-  ctx.strokeStyle = '#9a8870'; ctx.lineWidth = 2.4; ctx.stroke();
-  [mCX - ctHW, mCX + ctHW].forEach(ex => {
-    ctx.beginPath(); ctx.arc(ex, ctY2, 2.8, 0, Math.PI * 2); ctx.fillStyle = '#9a8870'; ctx.fill();
-  });
+  ctx.strokeStyle = 'rgba(145,130,100,0.70)'; ctx.lineWidth = 2; ctx.stroke();
 
-  // Rigging
-  ctx.strokeStyle = 'rgba(80,68,44,0.60)'; ctx.lineWidth = 0.85;
-  ctx.beginPath(); ctx.moveTo(mCX, mTopY); ctx.lineTo(hx(0.02), yBow + 10); ctx.stroke();  // forestay
-  ctx.beginPath(); ctx.moveTo(mCX, mTopY); ctx.lineTo(hx(0.92), yStern + 7); ctx.stroke(); // backstay
-  ctx.strokeStyle = 'rgba(80,68,44,0.42)'; ctx.lineWidth = 0.72;
+  // Rigging — very fine, barely-visible lines
+  ctx.strokeStyle = 'rgba(80,68,44,0.38)'; ctx.lineWidth = 0.7;
+  ctx.beginPath(); ctx.moveTo(mCX, mTopY); ctx.lineTo(hx(0.02), yBow + 10); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mCX, mTopY); ctx.lineTo(hx(0.92), yStern + 7); ctx.stroke();
+  ctx.strokeStyle = 'rgba(80,68,44,0.24)'; ctx.lineWidth = 0.6;
   ctx.beginPath(); ctx.moveTo(mCX - ctHW, ctY2); ctx.lineTo(hx(0.11), yMain - 4); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(mCX + ctHW, ctY2); ctx.lineTo(hx(0.42), yMain - 4); ctx.stroke();
 
   // Boom (derrick)
   const boomX = hx(0.13), boomY = yMain - freePx * 0.62;
   ctx.beginPath(); ctx.moveTo(mCX - 1, mBaseY - freePx * 0.28); ctx.lineTo(boomX, boomY);
-  ctx.strokeStyle = '#8a7860'; ctx.lineWidth = 2.2; ctx.stroke();
-  ctx.beginPath(); ctx.arc(boomX, boomY, 3, 0, Math.PI * 2); ctx.fillStyle = '#8a7860'; ctx.fill();
+  ctx.strokeStyle = 'rgba(130,112,84,0.65)'; ctx.lineWidth = 1.8; ctx.stroke();
   ctx.beginPath(); ctx.moveTo(mCX, mBaseY - freePx * 0.90); ctx.lineTo(boomX, boomY);
-  ctx.strokeStyle = 'rgba(80,68,44,0.38)'; ctx.lineWidth = 0.7; ctx.stroke();
+  ctx.strokeStyle = 'rgba(80,68,44,0.22)'; ctx.lineWidth = 0.6; ctx.stroke();
 
-  // Nav light (white at top)
-  ctx.beginPath(); ctx.arc(mCX, mTopY - 4, 4, 0, Math.PI * 2);
-  ctx.fillStyle = '#f0ece0'; ctx.fill(); ctx.strokeStyle = '#aaa08a'; ctx.lineWidth = 0.8; ctx.stroke();
-  ctx.beginPath(); ctx.arc(mCX, mTopY - 4, 1.8, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+  // Nav light
+  ctx.beginPath(); ctx.arc(mCX, mTopY - 4, 3.5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(240,236,220,0.80)'; ctx.fill();
 
   // ── STERN STAFF + FLAG ──
   const stX    = hx(0.998);
   const stBase = yStern + 1;
   const stH    = freePx * 1.38;
   ctx.beginPath(); ctx.moveTo(stX, stBase); ctx.lineTo(stX, stBase - stH);
-  ctx.strokeStyle = '#8a7060'; ctx.lineWidth = 1.6; ctx.stroke();
+  ctx.strokeStyle = 'rgba(138,112,96,0.55)'; ctx.lineWidth = 1.4; ctx.stroke();
 
-  // UK-style flag
+  // UK-style flag — slightly washed out like weathered fabric
   const fW = hw * 0.060, fH = freePx * 0.48;
   const fX = stX - fW, fY = stBase - stH;
+  ctx.save(); ctx.globalAlpha = 0.62;
   ctx.fillStyle = '#003399'; ctx.fillRect(fX, fY, fW, fH);
-  ctx.save(); ctx.beginPath(); ctx.rect(fX, fY, fW, fH); ctx.clip();
+  ctx.beginPath(); ctx.rect(fX, fY, fW, fH); ctx.clip();
   // White diagonals
   ctx.strokeStyle = '#fff';    ctx.lineWidth = fH * 0.30;
   ctx.beginPath(); ctx.moveTo(fX, fY); ctx.lineTo(fX + fW, fY + fH); ctx.stroke();
@@ -663,17 +664,17 @@ function drawBoat(res) {
   // ── LIFE RING ──
   const lrX = bdX0 - 11, lrY = whYm - wh2H * 0.5;
   ctx.beginPath(); ctx.arc(lrX, lrY, 6, 0, Math.PI * 2);
-  ctx.strokeStyle = '#cc2200'; ctx.lineWidth = 4; ctx.stroke();
-  ctx.strokeStyle = '#fff';    ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.strokeStyle = 'rgba(160,40,20,0.55)'; ctx.lineWidth = 3.5; ctx.stroke();
+  ctx.strokeStyle = 'rgba(230,220,205,0.40)'; ctx.lineWidth = 1.2; ctx.stroke();
 
   // ── RADAR on bridge roof ──
   const rdX = whX0 + (whX1 - whX0) * 0.62, rdY = whYt - 2;
-  ctx.fillStyle = '#c8c0b0'; rr(ctx, rdX - 4, rdY - 6, 8, 6, 1); ctx.fill();
-  ctx.strokeStyle = '#7a6a50'; ctx.lineWidth = 0.8; ctx.stroke();
+  ctx.fillStyle = 'rgba(185,176,158,0.70)'; rr(ctx, rdX - 4, rdY - 6, 8, 6, 1); ctx.fill();
+  ctx.strokeStyle = 'rgba(110,95,65,0.35)'; ctx.lineWidth = 0.8; ctx.stroke();
   ctx.beginPath(); ctx.moveTo(rdX, rdY - 6); ctx.lineTo(rdX, rdY - 14);
-  ctx.strokeStyle = '#606050'; ctx.lineWidth = 1.2; ctx.stroke();
+  ctx.strokeStyle = 'rgba(90,82,62,0.45)'; ctx.lineWidth = 1.0; ctx.stroke();
   ctx.beginPath(); ctx.ellipse(rdX, rdY - 15, 7, 3.5, 0, 0, Math.PI * 2);
-  ctx.fillStyle = '#d0c8b0'; ctx.fill(); ctx.strokeStyle = '#7a6a50'; ctx.lineWidth = 0.8; ctx.stroke();
+  ctx.fillStyle = 'rgba(195,185,162,0.65)'; ctx.fill(); ctx.strokeStyle = 'rgba(110,95,65,0.35)'; ctx.lineWidth = 0.8; ctx.stroke();
 
   // ── REFLECTION ──
   ctx.save(); ctx.globalAlpha = 0.06;
