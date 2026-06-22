@@ -302,13 +302,28 @@ function rr(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// ── DRAW TRAWLER ──
-function drawBoat(res) {
-  const cv  = document.getElementById('ship-canvas');
+// ── CANVAS SETUP HELPER (shared by drawBoat + drawGraph) ──
+function setupCanvas(id) {
+  const cv  = document.getElementById(id);
   const dpr = window.devicePixelRatio || 1;
   const dW  = cv.clientWidth, dH = cv.clientHeight;
-  cv.width  = dW * dpr; cv.height = dH * dpr;
-  const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+  const w   = Math.round(dW * dpr), h = Math.round(dH * dpr);
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, dW, dH);
+  return { ctx, dW, dH };
+}
+
+// ── DRAW TRAWLER ──
+function drawBoat(res) {
+  const { ctx, dW, dH } = setupCanvas('ship-canvas');
+
+  // Hull color palette — one place to adjust all hull surface colors
+  const HULL = {
+    topHi:  'rgba(244,240,232,1)', topMid: 'rgba(232,226,212,1)', topLo:  'rgba(214,206,190,1)',
+    afHi:   'rgba(180,30,22,1)',   afMid:  'rgba(146,20,16,1)',   afLo:   'rgba(110,14,10,1)',
+  };
 
   // ── Sky ──
   const sky = ctx.createLinearGradient(0, 0, 0, dH * 0.62);
@@ -388,7 +403,7 @@ function drawBoat(res) {
 
   // Topsides — warm off-white, slight weathering toward waterline
   const tG = ctx.createLinearGradient(0, yBow, 0, WL);
-  tG.addColorStop(0, '#f4f0e8'); tG.addColorStop(0.45, '#e8e2d4'); tG.addColorStop(1, '#d6cebe');
+  tG.addColorStop(0, HULL.topHi); tG.addColorStop(0.45, HULL.topMid); tG.addColorStop(1, HULL.topLo);
   ctx.fillStyle = tG; ctx.fillRect(hx0 - 5, yBow - 10, hw + 14, WL - yBow + 10);
 
   // Subtle shadow at waterline area on topsides
@@ -398,7 +413,7 @@ function drawBoat(res) {
 
   // Antifouling — slightly desaturated, more paint-like
   const aG = ctx.createLinearGradient(0, WL, 0, hBot);
-  aG.addColorStop(0, '#b41e16'); aG.addColorStop(0.6, '#921410'); aG.addColorStop(1, '#6e0e0a');
+  aG.addColorStop(0, HULL.afHi); aG.addColorStop(0.6, HULL.afMid); aG.addColorStop(1, HULL.afLo);
   ctx.fillStyle = aG; ctx.fillRect(hx0 - 5, WL, hw + 14, draftPx + 6);
 
   // Boot-topping
@@ -437,15 +452,12 @@ function drawBoat(res) {
     // Subtle ring (worn brass, not cartoon gold)
     ctx.beginPath(); ctx.arc(px, pY, pR + 1.2, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(165,128,40,0.55)'; ctx.fill();
-    // Glass — dark, slightly reflective
-    const pgR = ctx.createRadialGradient(px - pR*0.2, pY - pR*0.2, 0, px, pY, pR);
-    pgR.addColorStop(0, 'rgba(50,80,110,0.85)');
-    pgR.addColorStop(1, 'rgba(18,34,52,0.92)');
+    // Glass — flat dark fill (avoids per-porthole gradient allocation on every frame)
     ctx.beginPath(); ctx.arc(px, pY, pR, 0, Math.PI * 2);
-    ctx.fillStyle = pgR; ctx.fill();
-    // Tiny highlight only
+    ctx.fillStyle = 'rgba(22,38,58,0.90)'; ctx.fill();
+    // Highlight
     ctx.beginPath(); ctx.arc(px - pR * 0.28, pY - pR * 0.28, pR * 0.30, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(180,210,255,0.20)'; ctx.fill();
+    ctx.fillStyle = 'rgba(180,210,255,0.22)'; ctx.fill();
   }
 
   // ── DECK PLANKING ──
@@ -455,28 +467,30 @@ function drawBoat(res) {
     ctx.beginPath(); ctx.moveTo(hx(xFoEnd + 0.008), dy); ctx.lineTo(hx(xSternR + 0.02), dy); ctx.stroke();
   }
 
+  // Stanchion helper — reused for main deck and fo'c'sle railings
+  const stanchions = (xStart, xStep, count, xMax, yTop, yBot, style, lw) => {
+    ctx.strokeStyle = style; ctx.lineWidth = lw;
+    for (let i = 0; i < count; i++) {
+      const sx = hx(xStart + i * xStep);
+      if (xMax !== null && sx > hx(xMax)) break;
+      ctx.beginPath(); ctx.moveTo(sx, yTop); ctx.lineTo(sx, yBot); ctx.stroke();
+    }
+  };
+
   // ── MAIN DECK RAILING ──
   ctx.strokeStyle = 'rgba(140,120,80,0.45)'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(hx(xFoEnd + 0.006), yMain - 3); ctx.lineTo(hx(0.83), yMain - 3); ctx.stroke();
-  ctx.strokeStyle = 'rgba(140,120,80,0.30)'; ctx.lineWidth = 0.8;
-  for (let i = 0; i < 9; i++) {
-    const sx = hx(xFoEnd + 0.012 + i * 0.074);
-    if (sx > hx(0.82)) break;
-    ctx.beginPath(); ctx.moveTo(sx, yMain - 3); ctx.lineTo(sx, yMain + 7); ctx.stroke();
-  }
+  stanchions(xFoEnd + 0.012, 0.074, 9, 0.82, yMain - 3, yMain + 7, 'rgba(140,120,80,0.30)', 0.8);
 
   // ── FO'C'SLE ──
   ctx.strokeStyle = 'rgba(140,120,80,0.38)'; ctx.lineWidth = 0.9;
   ctx.beginPath(); ctx.moveTo(hx(0.03), yFo - 3); ctx.lineTo(hx(xFoEnd - 0.01), yFo - 3); ctx.stroke();
-  ctx.strokeStyle = 'rgba(140,120,80,0.25)'; ctx.lineWidth = 0.7;
-  for (let i = 0; i < 3; i++) {
-    const sx = hx(0.03 + i * 0.062);
-    ctx.beginPath(); ctx.moveTo(sx, yFo - 3); ctx.lineTo(sx, yFo + 6); ctx.stroke();
-  }
+  stanchions(0.03, 0.062, 3, null, yFo - 3, yFo + 6, 'rgba(140,120,80,0.25)', 0.7);
   // Anchor windlass
   ctx.save(); ctx.translate(hx(0.08), yFo + 4);
   ctx.fillStyle = 'rgba(130,112,82,0.80)';
   ctx.beginPath(); ctx.ellipse(0, 0, 8, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(80,62,36,0.40)'; ctx.lineWidth = 0.9; ctx.stroke();
   ctx.fillStyle = 'rgba(165,148,108,0.70)'; ctx.fillRect(-8, -1.5, 16, 3);
   ctx.restore();
   // Hawse pipe
@@ -489,6 +503,7 @@ function drawBoat(res) {
   ctx.stroke();
   // Fo'c'sle hatch
   ctx.fillStyle = 'rgba(185,162,120,0.60)'; rr(ctx, hx(0.10), yFo + 3, hw * 0.055, 5, 1); ctx.fill();
+  ctx.strokeStyle = 'rgba(90,68,36,0.35)'; ctx.lineWidth = 0.7; ctx.stroke();
 
   // ── WHEELHOUSE LOWER ──
   const whX0 = hx(0.37), whX1 = hx(0.76);
@@ -634,21 +649,21 @@ function drawBoat(res) {
   // UK-style flag — slightly washed out like weathered fabric
   const fW = hw * 0.060, fH = freePx * 0.48;
   const fX = stX - fW, fY = stBase - stH;
-  ctx.save(); ctx.globalAlpha = 0.62;
-  ctx.fillStyle = '#003399'; ctx.fillRect(fX, fY, fW, fH);
+  ctx.save();
   ctx.beginPath(); ctx.rect(fX, fY, fW, fH); ctx.clip();
+  ctx.fillStyle = 'rgba(0,51,153,0.62)'; ctx.fillRect(fX, fY, fW, fH);
   // White diagonals
-  ctx.strokeStyle = '#fff';    ctx.lineWidth = fH * 0.30;
+  ctx.strokeStyle = 'rgba(255,255,255,0.62)'; ctx.lineWidth = fH * 0.30;
   ctx.beginPath(); ctx.moveTo(fX, fY); ctx.lineTo(fX + fW, fY + fH); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(fX + fW, fY); ctx.lineTo(fX, fY + fH); ctx.stroke();
-  ctx.strokeStyle = '#cc1010'; ctx.lineWidth = fH * 0.15;
+  ctx.strokeStyle = 'rgba(204,16,16,0.62)'; ctx.lineWidth = fH * 0.15;
   ctx.beginPath(); ctx.moveTo(fX, fY); ctx.lineTo(fX + fW, fY + fH); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(fX + fW, fY); ctx.lineTo(fX, fY + fH); ctx.stroke();
   // Cross
-  ctx.strokeStyle = '#fff';    ctx.lineWidth = fH * 0.32;
+  ctx.strokeStyle = 'rgba(255,255,255,0.62)'; ctx.lineWidth = fH * 0.32;
   ctx.beginPath(); ctx.moveTo(fX + fW / 2, fY); ctx.lineTo(fX + fW / 2, fY + fH); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(fX, fY + fH / 2); ctx.lineTo(fX + fW, fY + fH / 2); ctx.stroke();
-  ctx.strokeStyle = '#cc1010'; ctx.lineWidth = fH * 0.19;
+  ctx.strokeStyle = 'rgba(204,16,16,0.62)'; ctx.lineWidth = fH * 0.19;
   ctx.beginPath(); ctx.moveTo(fX + fW / 2, fY); ctx.lineTo(fX + fW / 2, fY + fH); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(fX, fY + fH / 2); ctx.lineTo(fX + fW, fY + fH / 2); ctx.stroke();
   ctx.restore();
@@ -677,15 +692,13 @@ function drawBoat(res) {
   ctx.fillStyle = 'rgba(195,185,162,0.65)'; ctx.fill(); ctx.strokeStyle = 'rgba(110,95,65,0.35)'; ctx.lineWidth = 0.8; ctx.stroke();
 
   // ── REFLECTION ──
-  ctx.save(); ctx.globalAlpha = 0.06;
-  ctx.fillStyle = '#e8e0d0';
   ctx.beginPath();
   ctx.moveTo(hx(0.005), WL);
   ctx.bezierCurveTo(hx(0.2), WL + 6, hx(0.55), WL + 4, hx(0.95), WL + 5);
   ctx.lineTo(hx(1), WL + draftPx * 0.45);
   ctx.lineTo(hx(0.3), WL + draftPx * 0.35);
   ctx.lineTo(hx(0), WL);
-  ctx.fill(); ctx.restore();
+  ctx.fillStyle = 'rgba(232,224,208,0.06)'; ctx.fill();
 
   // ── WATERLINE DASHED ──
   ctx.setLineDash([5, 3]);
@@ -721,11 +734,7 @@ function drawBoat(res) {
 
 // ── DRAW GRAPH ──
 function drawGraph(res) {
-  const cv  = document.getElementById('graph-canvas');
-  const dpr = window.devicePixelRatio || 1;
-  const dW  = cv.clientWidth, dH = cv.clientHeight;
-  cv.width  = dW * dpr; cv.height = dH * dpr;
-  const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+  const { ctx, dW, dH } = setupCanvas('graph-canvas');
 
   const pad = { t: 14, r: 16, b: 36, l: 46 };
   const gW = dW - pad.l - pad.r, gH = dH - pad.t - pad.b;
@@ -786,7 +795,13 @@ function updateResults(res) {
   document.getElementById('rv-V').textContent = res.V.toFixed(1);
   document.getElementById('rv-W').textContent = res.W.toFixed(0);
 }
-function updateAll() { const r = compute(); updateResults(r); drawBoat(r); drawGraph(r); }
+let _rafId = null;
+function updateAll() {
+  const r = compute();
+  updateResults(r);
+  cancelAnimationFrame(_rafId);
+  _rafId = requestAnimationFrame(() => { const r2 = compute(); drawBoat(r2); drawGraph(r2); });
+}
 
 // ── READ ──
 function readState() {
