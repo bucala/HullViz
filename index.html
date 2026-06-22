@@ -315,14 +315,14 @@ function setupCanvas(id) {
   return { ctx, dW, dH };
 }
 
-// ── DRAW TRAWLER ──
+// ── DRAW FRIGATE ──
 function drawBoat(res) {
   const { ctx, dW, dH } = setupCanvas('ship-canvas');
 
   // Hull color palette — one place to adjust all hull surface colors
   const HULL = {
-    topHi:  'rgba(244,240,232,1)', topMid: 'rgba(232,226,212,1)', topLo:  'rgba(214,206,190,1)',
-    afHi:   'rgba(180,30,22,1)',   afMid:  'rgba(146,20,16,1)',   afLo:   'rgba(110,14,10,1)',
+    topHi:  'rgba(178,182,188,1)', topMid: 'rgba(160,164,170,1)', topLo:  'rgba(140,144,150,1)',
+    afHi:   'rgba(90,45,28,1)',    afMid:  'rgba(68,30,18,1)',    afLo:   'rgba(50,20,10,1)',
   };
 
   // ── Sky ──
@@ -355,119 +355,95 @@ function drawBoat(res) {
   }
 
   if (!res) return;
-
   const { T_cm, T_mm } = res;
 
-  // ── Hull coordinate system ──
-  const hw  = dW * 0.83;
+  ctx.save();
+
+  const hw  = dW * 0.88;
   const hx0 = (dW - hw) / 2;
   const hx  = f => hx0 + f * hw;
 
-  const hullTotalH = dH * 0.295;
-  const draftEstCm = S.B * 0.60;
-  const draftFrac  = Math.min(T_cm / draftEstCm, 0.88);
+  const hullTotalH = dH * 0.275;
+  const draftEstCm = S.B * 0.52;                            // frigates moderate draft
+  const draftFrac  = Math.min(T_cm / draftEstCm, 0.85);
   const draftPx    = Math.max(draftFrac * hullTotalH, 3);
-  const freePx     = Math.max(hullTotalH - draftPx, hullTotalH * 0.18);
+  const freePx     = Math.max(hullTotalH - draftPx, hullTotalH * 0.14);
   const hBot       = WL + draftPx;
 
-  // Sheer heights above WL (visual freeboard at key stations)
-  const bowRise    = freePx * 1.52;
-  const foRise     = freePx * 1.28;
-  const mainRise   = freePx;
-  const sternRise  = freePx * 1.18;
+  // ── Sheer profile — realistic frigate proportions ──
+  const bowRise   = freePx * 1.38;   // raised bow (flared clipper stem)
+  const xFoEnd    = 0.18;            // forecastle ends at 18% from bow
+  const foRise    = freePx * 1.22;   // forecastle deck height
+  const mainRise  = freePx * 1.00;   // almost flat main deck
+  const xSternR   = 0.91;            // stern starts rising here
+  const sternRise = freePx * 1.06;   // very slight transom rise
 
   const yBow   = WL - bowRise;
   const yFo    = WL - foRise;
   const yMain  = WL - mainRise;
   const yStern = WL - sternRise;
 
-  const xFoEnd   = 0.21;  // fo'c'sle / main deck break
-  const xSternR  = 0.87;  // where stern sheer starts rising
-
   // ── HULL BODY ──
-  ctx.save();
   ctx.beginPath();
-  ctx.moveTo(hx(0.005), WL - 2);                                        // stem tip
-  ctx.lineTo(hx(0.018), yBow + 5);                                      // above waterline at bow
-  ctx.bezierCurveTo(hx(0.04), yBow, hx(0.14), yFo + 2, hx(xFoEnd), yFo + 1);  // fo'c'sle sheer
-  ctx.lineTo(hx(xFoEnd + 0.004), yMain + 1);                            // deck break
-  ctx.bezierCurveTo(hx(xFoEnd + 0.08), yMain, hx(0.64), yMain, hx(xSternR), yMain + 1); // main deck
-  ctx.bezierCurveTo(hx(xSternR + 0.04), yMain, hx(0.955), yStern + 2, hx(0.995), yStern); // stern rise
-  ctx.lineTo(hx(1.0), yStern + (hBot - yStern) * 0.72);                // transom top
-  ctx.lineTo(hx(0.994), hBot - 5);                                      // transom bottom
-  ctx.bezierCurveTo(hx(0.82), hBot + 3, hx(0.16), hBot + 3, hx(0.038), hBot - 5); // keel
-  ctx.lineTo(hx(0.005), WL - 2);
+  // Clipper stem — nearly a point at waterline, then sweeps up
+  ctx.moveTo(hx(0.004), WL);                                            // stem tip at waterline (nearly a point)
+  ctx.lineTo(hx(0.012), yBow + freePx * 0.28);                         // stem rakes aft slightly
+  ctx.bezierCurveTo(hx(0.03), yBow, hx(0.10), yFo + 2, hx(xFoEnd), yFo); // forecastle sheer
+  ctx.lineTo(hx(xFoEnd + 0.003), yMain);                                // sharp deck break (frigate step)
+  ctx.bezierCurveTo(hx(xFoEnd + 0.06), yMain, hx(0.68), yMain, hx(xSternR), yMain + 1); // flat main deck
+  ctx.bezierCurveTo(hx(xSternR + 0.03), yMain + 1, hx(0.96), yStern, hx(0.997), yStern); // slight stern rise
+  // Transom stern — flat and vertical (military)
+  ctx.lineTo(hx(1.0), hBot - 2);                                        // transom top-right
+  ctx.lineTo(hx(0.997), hBot);                                          // transom bottom-right
+  // Keel — shallow, slight V
+  ctx.bezierCurveTo(hx(0.80), hBot + 2, hx(0.20), hBot + 2, hx(0.04), hBot - 3);
+  ctx.lineTo(hx(0.004), WL);
   ctx.closePath();
 
   ctx.save(); ctx.clip();
 
-  // Topsides — warm off-white, slight weathering toward waterline
+  // Topsides — cool gray, military warship
   const tG = ctx.createLinearGradient(0, yBow, 0, WL);
-  tG.addColorStop(0, HULL.topHi); tG.addColorStop(0.45, HULL.topMid); tG.addColorStop(1, HULL.topLo);
+  tG.addColorStop(0, HULL.topHi); tG.addColorStop(0.50, HULL.topMid); tG.addColorStop(1, HULL.topLo);
   ctx.fillStyle = tG; ctx.fillRect(hx0 - 5, yBow - 10, hw + 14, WL - yBow + 10);
 
-  // Subtle shadow at waterline area on topsides
-  const wlSh = ctx.createLinearGradient(0, WL - 18, 0, WL);
-  wlSh.addColorStop(0, 'rgba(0,0,0,0)'); wlSh.addColorStop(1, 'rgba(0,0,0,0.06)');
-  ctx.fillStyle = wlSh; ctx.fillRect(hx0 - 5, WL - 18, hw + 14, 18);
+  // Waterline shadow overlay on topsides
+  const wlSh = ctx.createLinearGradient(0, WL - 14, 0, WL);
+  wlSh.addColorStop(0, 'rgba(0,0,0,0)'); wlSh.addColorStop(1, 'rgba(0,0,0,0.08)');
+  ctx.fillStyle = wlSh; ctx.fillRect(hx0 - 5, WL - 14, hw + 14, 14);
 
-  // Antifouling — slightly desaturated, more paint-like
+  // Antifouling
   const aG = ctx.createLinearGradient(0, WL, 0, hBot);
   aG.addColorStop(0, HULL.afHi); aG.addColorStop(0.6, HULL.afMid); aG.addColorStop(1, HULL.afLo);
   ctx.fillStyle = aG; ctx.fillRect(hx0 - 5, WL, hw + 14, draftPx + 6);
 
-  // Boot-topping
-  ctx.fillStyle = 'rgba(18,14,6,0.75)'; ctx.fillRect(hx0 - 5, WL - 3, hw + 14, 2.2);
-  ctx.fillStyle = 'rgba(188,152,0,0.80)'; ctx.fillRect(hx0 - 5, WL - 6, hw + 14, 2.8);
-  ctx.fillStyle = 'rgba(18,14,6,0.65)'; ctx.fillRect(hx0 - 5, WL - 9, hw + 14, 1.8);
+  // Boot-topping — minimal, military: dark stripe then gray stripe
+  ctx.fillStyle = 'rgba(22,18,14,0.82)'; ctx.fillRect(hx0 - 5, WL - 2, hw + 14, 2);
+  ctx.fillStyle = 'rgba(195,198,204,0.55)'; ctx.fillRect(hx0 - 5, WL - 4, hw + 14, 2);
 
   ctx.restore(); // end hull clip
 
-  // Hull outline — thin, semi-transparent, not a cartoon stroke
-  ctx.strokeStyle = 'rgba(30,22,8,0.38)'; ctx.lineWidth = 1.1; ctx.stroke();
+  // Hull outline
+  ctx.strokeStyle = 'rgba(70,75,80,0.32)'; ctx.lineWidth = 1.0; ctx.stroke();
 
-  // ── DECK BREAK ──
+  // ── DECK BREAK (forecastle step) ──
   ctx.beginPath();
-  ctx.moveTo(hx(xFoEnd), yFo + 1); ctx.lineTo(hx(xFoEnd), yMain + 1);
-  ctx.strokeStyle = 'rgba(60,46,26,0.32)'; ctx.lineWidth = 1.2; ctx.stroke();
+  ctx.moveTo(hx(xFoEnd), yFo); ctx.lineTo(hx(xFoEnd), yMain);
+  ctx.strokeStyle = 'rgba(55,60,65,0.35)'; ctx.lineWidth = 1.1; ctx.stroke();
 
-  // ── SHEER STRAKE — subtle shadow, not a bold line ──
-  ctx.strokeStyle = 'rgba(55,40,18,0.13)'; ctx.lineWidth = 3.5;
+  // ── SHEER STRAKE SHADOW ──
+  ctx.strokeStyle = 'rgba(50,55,60,0.12)'; ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(hx(0.018), yBow + 9);
-  ctx.bezierCurveTo(hx(0.04), yBow + 5, hx(0.14), yFo + 5, hx(xFoEnd), yFo + 5);
+  ctx.moveTo(hx(0.012), yBow + freePx * 0.28 + 6);
+  ctx.bezierCurveTo(hx(0.03), yBow + 5, hx(0.10), yFo + 5, hx(xFoEnd), yFo + 4);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(hx(xFoEnd + 0.006), yMain + 5);
-  ctx.bezierCurveTo(hx(xFoEnd + 0.08), yMain + 4, hx(0.64), yMain + 4, hx(xSternR), yMain + 5);
-  ctx.bezierCurveTo(hx(xSternR + 0.04), yMain + 4, hx(0.955), yStern + 6, hx(0.995), yStern + 4);
+  ctx.moveTo(hx(xFoEnd + 0.005), yMain + 4);
+  ctx.bezierCurveTo(hx(xFoEnd + 0.06), yMain + 4, hx(0.68), yMain + 4, hx(xSternR), yMain + 5);
+  ctx.bezierCurveTo(hx(xSternR + 0.03), yMain + 4, hx(0.96), yStern + 3, hx(0.997), yStern + 3);
   ctx.stroke();
 
-  // ── PORTHOLES ──
-  const pY  = yMain + (WL - yMain) * 0.52;
-  const pR  = Math.max(3.5, freePx * 0.115);
-  for (let i = 0; i < 8; i++) {
-    const px = hx(xFoEnd + 0.04 + i * 0.085);
-    if (px > hx(0.83)) break;
-    // Subtle ring (worn brass, not cartoon gold)
-    ctx.beginPath(); ctx.arc(px, pY, pR + 1.2, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(165,128,40,0.55)'; ctx.fill();
-    // Glass — flat dark fill (avoids per-porthole gradient allocation on every frame)
-    ctx.beginPath(); ctx.arc(px, pY, pR, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(22,38,58,0.90)'; ctx.fill();
-    // Highlight
-    ctx.beginPath(); ctx.arc(px - pR * 0.28, pY - pR * 0.28, pR * 0.30, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(180,210,255,0.22)'; ctx.fill();
-  }
-
-  // ── DECK PLANKING ──
-  ctx.strokeStyle = 'rgba(130,105,65,0.07)'; ctx.lineWidth = 0.5;
-  for (let i = 2; i <= 7; i++) {
-    const dy = yMain + i * (WL - yMain) / 8.5;
-    ctx.beginPath(); ctx.moveTo(hx(xFoEnd + 0.008), dy); ctx.lineTo(hx(xSternR + 0.02), dy); ctx.stroke();
-  }
-
-  // Stanchion helper — reused for main deck and fo'c'sle railings
+  // Stanchion helper
   const stanchions = (xStart, xStep, count, xMax, yTop, yBot, style, lw) => {
     ctx.strokeStyle = style; ctx.lineWidth = lw;
     for (let i = 0; i < count; i++) {
@@ -477,177 +453,252 @@ function drawBoat(res) {
     }
   };
 
-  // ── MAIN DECK RAILING ──
-  ctx.strokeStyle = 'rgba(140,120,80,0.45)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(hx(xFoEnd + 0.006), yMain - 3); ctx.lineTo(hx(0.83), yMain - 3); ctx.stroke();
-  stanchions(xFoEnd + 0.012, 0.074, 9, 0.82, yMain - 3, yMain + 7, 'rgba(140,120,80,0.30)', 0.8);
+  // ── DECK RAILINGS ──
+  // Main deck railing (forecastle break to helo deck edge)
+  ctx.strokeStyle = 'rgba(155,160,168,0.50)'; ctx.lineWidth = 0.9;
+  ctx.beginPath(); ctx.moveTo(hx(xFoEnd + 0.005), yMain - 3); ctx.lineTo(hx(0.77), yMain - 3); ctx.stroke();
+  stanchions(xFoEnd + 0.012, 0.065, 11, 0.77, yMain - 3, yMain + 5, 'rgba(140,145,152,0.28)', 0.7);
 
-  // ── FO'C'SLE ──
-  ctx.strokeStyle = 'rgba(140,120,80,0.38)'; ctx.lineWidth = 0.9;
-  ctx.beginPath(); ctx.moveTo(hx(0.03), yFo - 3); ctx.lineTo(hx(xFoEnd - 0.01), yFo - 3); ctx.stroke();
-  stanchions(0.03, 0.062, 3, null, yFo - 3, yFo + 6, 'rgba(140,120,80,0.25)', 0.7);
-  // Anchor windlass
-  ctx.save(); ctx.translate(hx(0.08), yFo + 4);
-  ctx.fillStyle = 'rgba(130,112,82,0.80)';
-  ctx.beginPath(); ctx.ellipse(0, 0, 8, 4.5, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = 'rgba(80,62,36,0.40)'; ctx.lineWidth = 0.9; ctx.stroke();
-  ctx.fillStyle = 'rgba(165,148,108,0.70)'; ctx.fillRect(-8, -1.5, 16, 3);
+  // Forecastle railing
+  ctx.strokeStyle = 'rgba(155,160,168,0.45)'; ctx.lineWidth = 0.9;
+  ctx.beginPath(); ctx.moveTo(hx(0.022), yFo - 3); ctx.lineTo(hx(xFoEnd - 0.005), yFo - 3); ctx.stroke();
+  stanchions(0.022, 0.052, 3, null, yFo - 3, yFo + 5, 'rgba(140,145,152,0.25)', 0.7);
+
+  // Hawse pipe (anchor chain port at bow)
+  ctx.beginPath(); ctx.ellipse(hx(0.032), yFo + (WL - yFo) * 0.48, 3, 2, -0.22, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(18,16,14,0.70)'; ctx.fill();
+
+  // ── FORWARD GUN MOUNT at ~13% from bow on forecastle ──
+  const gnX = hx(0.13), gnY = yFo;
+  // Turret base plate
+  ctx.fillStyle = 'rgba(130,134,140,0.82)';
+  ctx.beginPath(); ctx.ellipse(gnX, gnY, 9, 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(80,84,90,0.40)'; ctx.lineWidth = 0.8; ctx.stroke();
+  // Turret dome
+  const gnG = ctx.createLinearGradient(gnX - 9, gnY - 8, gnX + 9, gnY);
+  gnG.addColorStop(0, 'rgba(155,159,165,0.90)'); gnG.addColorStop(1, 'rgba(110,114,120,0.90)');
+  ctx.beginPath(); ctx.ellipse(gnX, gnY - 4, 8, 5.5, 0, 0, Math.PI * 2);
+  ctx.fillStyle = gnG; ctx.fill();
+  ctx.strokeStyle = 'rgba(70,74,80,0.35)'; ctx.lineWidth = 0.8; ctx.stroke();
+  // Gun barrel — pointing forward and slightly down
+  ctx.save(); ctx.translate(gnX, gnY - 5);
+  ctx.rotate(-0.18); // slight downward angle
+  ctx.fillStyle = 'rgba(80,84,90,0.88)';
+  ctx.fillRect(-14, -1.8, 22, 3.6);
+  // Muzzle brake suggestion
+  ctx.fillStyle = 'rgba(60,64,70,0.70)'; ctx.fillRect(7, -2.2, 4, 4.4);
   ctx.restore();
-  // Hawse pipe
-  ctx.beginPath(); ctx.ellipse(hx(0.035), yFo + (WL - yFo) * 0.50, 3.5, 2.5, -0.25, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(22,18,8,0.65)'; ctx.fill();
-  // Chain
-  ctx.strokeStyle = 'rgba(80,70,50,0.28)'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(hx(0.035), yFo + (WL - yFo) * 0.55);
-  ctx.bezierCurveTo(hx(0.02), yFo + (WL - yFo) * 0.7, hx(0.01), WL - 4, hx(0.005), WL - 1);
-  ctx.stroke();
-  // Fo'c'sle hatch
-  ctx.fillStyle = 'rgba(185,162,120,0.60)'; rr(ctx, hx(0.10), yFo + 3, hw * 0.055, 5, 1); ctx.fill();
-  ctx.strokeStyle = 'rgba(90,68,36,0.35)'; ctx.lineWidth = 0.7; ctx.stroke();
 
-  // ── WHEELHOUSE LOWER ──
-  const whX0 = hx(0.37), whX1 = hx(0.76);
-  const whW  = whX1 - whX0;
-  const wh1H = freePx * 1.08;
-  const wh2H = freePx * 0.80;
-  const whYb = yMain;
-  const whYm = yMain - wh1H;
-  const whYt = whYm - wh2H;
-
-  // Lower body
+  // ── MAIN CITADEL / BRIDGE BLOCK (28%–58% from bow) ──
+  const ctX0 = hx(0.28), ctX1 = hx(0.58);
+  const ctW  = ctX1 - ctX0;
+  // Lower citadel block — stealth sloped front face
+  const ctLH = freePx * 1.05;   // lower block height
+  const ctYb = yMain;
+  const ctYm = yMain - ctLH;
   ctx.beginPath();
-  ctx.moveTo(whX0, whYb); ctx.lineTo(whX1, whYb);
-  ctx.lineTo(whX1 + 2, whYm + 3); ctx.lineTo(whX1, whYm);
-  ctx.lineTo(whX0, whYm); ctx.lineTo(whX0 - 2, whYm + 3);
+  ctx.moveTo(ctX0 + ctW * 0.10, ctYb);   // base front (slightly inset — sloped)
+  ctx.lineTo(ctX1, ctYb);                  // base rear
+  ctx.lineTo(ctX1, ctYm);                  // rear top
+  ctx.lineTo(ctX0, ctYm + ctLH * 0.08);   // front top (stealth slope)
   ctx.closePath();
-  const wh1G = ctx.createLinearGradient(whX0, 0, whX1, 0);
-  wh1G.addColorStop(0, '#cec8bc'); wh1G.addColorStop(0.5, '#e0d9ca'); wh1G.addColorStop(1, '#c8c2b4');
-  ctx.fillStyle = wh1G; ctx.fill(); ctx.strokeStyle = 'rgba(72,56,34,0.28)'; ctx.lineWidth = 0.8; ctx.stroke();
+  const ctLG = ctx.createLinearGradient(ctX0, 0, ctX1, 0);
+  ctLG.addColorStop(0, 'rgba(148,152,158,0.95)'); ctLG.addColorStop(0.5, 'rgba(168,172,178,0.95)'); ctLG.addColorStop(1, 'rgba(138,142,148,0.95)');
+  ctx.fillStyle = ctLG; ctx.fill();
+  ctx.strokeStyle = 'rgba(70,75,82,0.30)'; ctx.lineWidth = 0.8; ctx.stroke();
 
-  // Lower windows (4)
-  const lw_h = wh1H * 0.40, lw_y = whYb - wh1H * 0.72;
-  const lw_n = 4, lw_sp = whW / (lw_n + 0.4);
-  for (let i = 0; i < lw_n; i++) {
-    const wx = whX0 + lw_sp * (i + 0.24), ww = lw_sp * 0.64;
-    const wG = ctx.createLinearGradient(wx, lw_y, wx, lw_y + lw_h);
-    wG.addColorStop(0, 'rgba(55,90,138,0.45)'); wG.addColorStop(1, 'rgba(28,55,100,0.55)');
-    rr(ctx, wx, lw_y, ww, lw_h, 2); ctx.fillStyle = wG; ctx.fill();
-    ctx.strokeStyle = 'rgba(100,82,54,0.30)'; ctx.lineWidth = 0.7; ctx.stroke();
-    // Frame divider
-    ctx.beginPath(); ctx.moveTo(wx + ww / 2, lw_y); ctx.lineTo(wx + ww / 2, lw_y + lw_h);
-    ctx.strokeStyle = 'rgba(90,72,44,0.22)'; ctx.lineWidth = 0.6; ctx.stroke();
-    // Subtle reflection
-    ctx.fillStyle = 'rgba(255,255,255,0.10)'; ctx.fillRect(wx + 2, lw_y + 2, ww * 0.28, lw_h - 4);
+  // Lower citadel windows (5 narrow rectangles — angled for stealth)
+  const lcwH = ctLH * 0.30, lcwY = ctYb - ctLH * 0.64;
+  const lcwN = 5, lcwSp = ctW * 0.80 / (lcwN + 0.5);
+  for (let i = 0; i < lcwN; i++) {
+    const wxx = ctX0 + ctW * 0.12 + lcwSp * (i + 0.18), www = lcwSp * 0.58;
+    const lcwG = ctx.createLinearGradient(wxx, lcwY, wxx, lcwY + lcwH);
+    lcwG.addColorStop(0, 'rgba(40,65,105,0.55)'); lcwG.addColorStop(1, 'rgba(20,40,80,0.65)');
+    rr(ctx, wxx, lcwY, www, lcwH, 1); ctx.fillStyle = lcwG; ctx.fill();
+    ctx.strokeStyle = 'rgba(60,65,75,0.30)'; ctx.lineWidth = 0.6; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(wxx + 1, lcwY + 1, www * 0.30, lcwH - 2);
   }
 
-  // ── WHEELHOUSE UPPER (bridge) ──
-  const bdX0 = whX0 - 9, bdX1 = whX1 + 9;
+  // Upper bridge level — slightly narrower, more steeply sloped (stealth frigate)
+  const brX0 = ctX0 + 4, brX1 = ctX1 - 3;
+  const brW  = brX1 - brX0;
+  const brH  = freePx * 0.78;
+  const brYb = ctYm;
+  const brYt = ctYm - brH;
   ctx.beginPath();
-  ctx.moveTo(bdX0, whYm); ctx.lineTo(bdX1, whYm);
-  ctx.lineTo(bdX1 - 3, whYt + 2); ctx.lineTo(bdX0 + 3, whYt + 2);
+  ctx.moveTo(brX0 + brW * 0.14, brYb);    // sloped front base
+  ctx.lineTo(brX1, brYb);
+  ctx.lineTo(brX1 - brW * 0.04, brYt);    // slight aft lean
+  ctx.lineTo(brX0, brYt + brH * 0.10);    // front top (stealth slope)
   ctx.closePath();
-  const wh2G = ctx.createLinearGradient(bdX0, 0, bdX1, 0);
-  wh2G.addColorStop(0, '#c6c0b2'); wh2G.addColorStop(0.5, '#d8d2c4'); wh2G.addColorStop(1, '#beb8aa');
-  ctx.fillStyle = wh2G; ctx.fill(); ctx.strokeStyle = 'rgba(72,56,34,0.25)'; ctx.lineWidth = 0.8; ctx.stroke();
+  const brG = ctx.createLinearGradient(brX0, 0, brX1, 0);
+  brG.addColorStop(0, 'rgba(138,142,148,0.95)'); brG.addColorStop(0.55, 'rgba(158,162,168,0.95)'); brG.addColorStop(1, 'rgba(128,132,138,0.95)');
+  ctx.fillStyle = brG; ctx.fill();
+  ctx.strokeStyle = 'rgba(70,75,82,0.28)'; ctx.lineWidth = 0.8; ctx.stroke();
 
-  // Bridge wings
-  [[bdX0, bdX0 - 15], [bdX1, bdX1 + 15]].forEach(([bx, tx2]) => {
-    ctx.beginPath();
-    ctx.moveTo(bx, whYm - 5); ctx.lineTo(tx2, whYm - 2); ctx.lineTo(tx2, whYm + 3); ctx.lineTo(bx, whYm + 1);
-    ctx.closePath(); ctx.fillStyle = 'rgba(205,198,184,0.85)'; ctx.fill();
-    ctx.strokeStyle = 'rgba(72,56,34,0.20)'; ctx.lineWidth = 0.7; ctx.stroke();
-  });
-
-  // Bridge windows (5 wider)
-  const bw_h = wh2H * 0.44, bw_y = whYm - wh2H * 0.80;
-  const bw_n = 5, bw_sp = (bdX1 - bdX0 - 6) / (bw_n + 0.3);
-  for (let i = 0; i < bw_n; i++) {
-    const wx = bdX0 + 4 + bw_sp * (i + 0.14), ww = bw_sp * 0.74;
-    const bwG = ctx.createLinearGradient(wx, bw_y, wx, bw_y + bw_h);
-    bwG.addColorStop(0, 'rgba(70,115,168,0.38)'); bwG.addColorStop(1, 'rgba(40,80,130,0.48)');
-    rr(ctx, wx, bw_y, ww, bw_h, 2); ctx.fillStyle = bwG; ctx.fill();
-    ctx.strokeStyle = 'rgba(90,72,44,0.25)'; ctx.lineWidth = 0.7; ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,0.09)'; ctx.fillRect(wx + 2, bw_y + 2, ww * 0.32, bw_h - 4);
+  // Bridge windows — 4 windows, angled (dark blue-gray)
+  const brwH = brH * 0.42, brwY = brYb - brH * 0.78;
+  const brwN = 4, brwSp = brW * 0.82 / (brwN + 0.4);
+  for (let i = 0; i < brwN; i++) {
+    const wxx = brX0 + brW * 0.10 + brwSp * (i + 0.14), www = brwSp * 0.68;
+    const brwG = ctx.createLinearGradient(wxx, brwY, wxx, brwY + brwH);
+    brwG.addColorStop(0, 'rgba(30,55,100,0.52)'); brwG.addColorStop(1, 'rgba(15,35,75,0.65)');
+    rr(ctx, wxx, brwY, www, brwH, 1); ctx.fillStyle = brwG; ctx.fill();
+    ctx.strokeStyle = 'rgba(55,60,72,0.28)'; ctx.lineWidth = 0.6; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.09)'; ctx.fillRect(wxx + 1, brwY + 1, www * 0.32, brwH - 2);
   }
 
-  // Bridge roof (slight overhang front/back)
+  // Bridge roof — slightly darker gray
   ctx.beginPath();
-  ctx.moveTo(bdX0 + 2, whYt + 2); ctx.lineTo(bdX1 - 2, whYt + 2);
-  ctx.lineTo(bdX1 + 6, whYt - 1); ctx.lineTo(bdX0 - 6, whYt - 1);
-  ctx.closePath(); ctx.fillStyle = '#b2aa9a'; ctx.fill(); ctx.strokeStyle = 'rgba(72,56,34,0.22)'; ctx.lineWidth = 0.7; ctx.stroke();
+  ctx.moveTo(brX0, brYt + brH * 0.10);
+  ctx.lineTo(brX1 - brW * 0.04, brYt);
+  ctx.lineTo(brX1 + 4, brYt - 1);
+  ctx.lineTo(brX0 - 3, brYt + brH * 0.05);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(118,122,128,0.95)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(70,75,82,0.25)'; ctx.lineWidth = 0.7; ctx.stroke();
 
-  // ── FUNNEL ──
-  const fnCX = hx(0.81), fnW = hw * 0.040;
-  const fnH  = freePx * 0.62;
-  const fnYb = yMain - 2, fnYt = fnYb - fnH;
+  // ── FORWARD MAST (from bridge top) ──
+  const fmX = brX0 + brW * 0.40;
+  const fmBase = brYt;
+  const fmTop  = fmBase - freePx * 2.55;
+  const fmW2   = 2.8;
+
+  // Mast body — tapered
   ctx.beginPath();
-  ctx.moveTo(fnCX - fnW * 0.52, fnYb); ctx.lineTo(fnCX + fnW * 0.52, fnYb);
-  ctx.lineTo(fnCX + fnW * 0.36, fnYt); ctx.lineTo(fnCX - fnW * 0.36, fnYt);
+  ctx.moveTo(fmX - fmW2, fmBase); ctx.lineTo(fmX + fmW2, fmBase);
+  ctx.lineTo(fmX + 0.9, fmTop + 3); ctx.lineTo(fmX - 0.9, fmTop + 3);
+  ctx.closePath();
+  const fmG = ctx.createLinearGradient(fmX - fmW2, 0, fmX + fmW2, 0);
+  fmG.addColorStop(0, 'rgba(100,105,112,0.90)'); fmG.addColorStop(0.45, 'rgba(148,152,158,0.90)'); fmG.addColorStop(1, 'rgba(100,105,112,0.90)');
+  ctx.fillStyle = fmG; ctx.fill();
+
+  // Spreader cross-bar at ~60% of mast height
+  const fmSpY = fmBase - (fmBase - fmTop) * 0.60;
+  const fmSpW = hw * 0.075;
+  ctx.beginPath(); ctx.moveTo(fmX - fmSpW, fmSpY); ctx.lineTo(fmX + fmSpW, fmSpY);
+  ctx.strokeStyle = 'rgba(120,125,132,0.75)'; ctx.lineWidth = 1.8; ctx.stroke();
+
+  // Radar dome at top (small white-gray circle)
+  ctx.beginPath(); ctx.arc(fmX, fmTop + 1, 5.5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(210,212,216,0.88)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(90,95,102,0.40)'; ctx.lineWidth = 0.7; ctx.stroke();
+
+  // Rotating radar dish (offset from top)
+  ctx.save(); ctx.translate(fmX + 8, fmTop - 2);
+  ctx.beginPath(); ctx.ellipse(0, 0, 9, 4.5, 0.35, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(185,188,194,0.75)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(80,85,92,0.35)'; ctx.lineWidth = 0.8; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-8, 2);
+  ctx.strokeStyle = 'rgba(90,95,102,0.50)'; ctx.lineWidth = 1.0; ctx.stroke();
+  ctx.restore();
+
+  // Forestay (to bow)
+  ctx.strokeStyle = 'rgba(90,95,102,0.32)'; ctx.lineWidth = 0.7;
+  ctx.beginPath(); ctx.moveTo(fmX, fmTop); ctx.lineTo(hx(0.025), yBow + 8); ctx.stroke();
+  // Backstay (to mid-ship)
+  ctx.beginPath(); ctx.moveTo(fmX, fmTop); ctx.lineTo(hx(0.65), yMain - 3); ctx.stroke();
+
+  // Nav light at top
+  ctx.beginPath(); ctx.arc(fmX, fmTop - 6, 3, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(245,242,220,0.85)'; ctx.fill();
+
+  // ── FUNNEL at ~62% from bow — compact, modern, angled aft ──
+  const fnCX = hx(0.62), fnW = hw * 0.036;
+  const fnH  = freePx * 0.55;
+  const fnYb = yMain - 1;
+  const fnYt = fnYb - fnH;
+  // Slight aft lean (stealth profile)
+  ctx.beginPath();
+  ctx.moveTo(fnCX - fnW * 0.55, fnYb); ctx.lineTo(fnCX + fnW * 0.45, fnYb);
+  ctx.lineTo(fnCX + fnW * 0.55, fnYt); ctx.lineTo(fnCX - fnW * 0.35, fnYt);
   ctx.closePath();
   const fnG = ctx.createLinearGradient(fnCX - fnW, 0, fnCX + fnW, 0);
-  fnG.addColorStop(0, '#a83010'); fnG.addColorStop(0.45, '#c84a16'); fnG.addColorStop(1, '#8c2408');
-  ctx.fillStyle = fnG; ctx.fill(); ctx.strokeStyle = 'rgba(80,22,4,0.35)'; ctx.lineWidth = 0.8; ctx.stroke();
-  // Subtle worn white band
-  ctx.fillStyle = 'rgba(240,234,220,0.35)';
-  ctx.fillRect(fnCX - fnW * 0.44, fnYt + fnH * 0.28, fnW * 0.88, fnH * 0.14);
-  // Sooty cap
-  ctx.beginPath(); ctx.ellipse(fnCX, fnYt, fnW * 0.38, 3.5, 0, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(18,14,12,0.88)'; ctx.fill();
+  fnG.addColorStop(0, 'rgba(100,104,110,0.92)'); fnG.addColorStop(0.5, 'rgba(128,132,138,0.92)'); fnG.addColorStop(1, 'rgba(92,96,102,0.92)');
+  ctx.fillStyle = fnG; ctx.fill();
+  ctx.strokeStyle = 'rgba(60,64,72,0.32)'; ctx.lineWidth = 0.8; ctx.stroke();
+  // Dark exhaust cap
+  ctx.beginPath(); ctx.ellipse(fnCX + fnW * 0.08, fnYt, fnW * 0.42, 3, 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(22,20,18,0.90)'; ctx.fill();
 
-  // ── FORWARD MAST ──
-  const mCX    = hx(0.27);
-  const mBaseY = yMain - 3;
-  const mTopY  = mBaseY - freePx * 2.35;
-  const mW2    = 3.2;
-
-  // Mast body (tapered, gradient)
+  // ── AFT SUPERSTRUCTURE (62%–76% from bow) ──
+  const asX0 = hx(0.64), asX1 = hx(0.76);
+  const asW  = asX1 - asX0;
+  const asH  = freePx * 0.68;
+  const asYb = yMain;
+  const asYt = asYb - asH;
   ctx.beginPath();
-  ctx.moveTo(mCX - mW2, mBaseY); ctx.lineTo(mCX + mW2, mBaseY);
-  ctx.lineTo(mCX + 1.0, mTopY); ctx.lineTo(mCX - 1.0, mTopY);
+  ctx.moveTo(asX0 + asW * 0.08, asYb); ctx.lineTo(asX1, asYb);
+  ctx.lineTo(asX1, asYt); ctx.lineTo(asX0, asYt + asH * 0.08);
   ctx.closePath();
-  const mG = ctx.createLinearGradient(mCX - mW2, 0, mCX + mW2, 0);
-  mG.addColorStop(0, '#908070'); mG.addColorStop(0.4, '#c0b49e'); mG.addColorStop(1, '#908070');
-  ctx.fillStyle = mG; ctx.fill();
-  // No hard outline on mast — shape alone defines it
+  const asG = ctx.createLinearGradient(asX0, 0, asX1, 0);
+  asG.addColorStop(0, 'rgba(145,149,155,0.92)'); asG.addColorStop(1, 'rgba(133,137,143,0.92)');
+  ctx.fillStyle = asG; ctx.fill();
+  ctx.strokeStyle = 'rgba(70,75,82,0.28)'; ctx.lineWidth = 0.8; ctx.stroke();
 
-  // Mast platform
-  const cpY = mBaseY - freePx * 1.4;
-  ctx.fillStyle = 'rgba(148,132,100,0.65)'; ctx.fillRect(mCX - 7, cpY - 3, 14, 4);
+  // ── AFT MAST (on aft superstructure) ──
+  const amX = asX0 + asW * 0.55;
+  const amBase = asYt;
+  const amTop  = amBase - freePx * 1.55;
+  ctx.beginPath();
+  ctx.moveTo(amX - 2.2, amBase); ctx.lineTo(amX + 2.2, amBase);
+  ctx.lineTo(amX + 0.8, amTop + 2); ctx.lineTo(amX - 0.8, amTop + 2);
+  ctx.closePath();
+  const amG = ctx.createLinearGradient(amX - 2.2, 0, amX + 2.2, 0);
+  amG.addColorStop(0, 'rgba(100,105,112,0.88)'); amG.addColorStop(0.45, 'rgba(148,152,158,0.88)'); amG.addColorStop(1, 'rgba(100,105,112,0.88)');
+  ctx.fillStyle = amG; ctx.fill();
 
-  // Spreaders
-  const ctY2 = mBaseY - freePx * 1.62;
-  const ctHW  = hw * 0.090;
-  ctx.beginPath(); ctx.moveTo(mCX - ctHW, ctY2); ctx.lineTo(mCX + ctHW, ctY2);
-  ctx.strokeStyle = 'rgba(145,130,100,0.70)'; ctx.lineWidth = 2; ctx.stroke();
+  // Cross-arm for comms antennas
+  const amArmY = amBase - (amBase - amTop) * 0.55;
+  const amArmW = hw * 0.048;
+  ctx.beginPath(); ctx.moveTo(amX - amArmW, amArmY); ctx.lineTo(amX + amArmW, amArmY);
+  ctx.strokeStyle = 'rgba(120,125,132,0.70)'; ctx.lineWidth = 1.6; ctx.stroke();
+  // Antenna wires from arm tips
+  ctx.strokeStyle = 'rgba(90,95,102,0.35)'; ctx.lineWidth = 0.6;
+  ctx.beginPath(); ctx.moveTo(amX - amArmW, amArmY); ctx.lineTo(amX - amArmW * 0.5, amTop + 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(amX + amArmW, amArmY); ctx.lineTo(amX + amArmW * 0.5, amTop + 2); ctx.stroke();
 
-  // Rigging — very fine, barely-visible lines
-  ctx.strokeStyle = 'rgba(80,68,44,0.38)'; ctx.lineWidth = 0.7;
-  ctx.beginPath(); ctx.moveTo(mCX, mTopY); ctx.lineTo(hx(0.02), yBow + 10); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(mCX, mTopY); ctx.lineTo(hx(0.92), yStern + 7); ctx.stroke();
-  ctx.strokeStyle = 'rgba(80,68,44,0.24)'; ctx.lineWidth = 0.6;
-  ctx.beginPath(); ctx.moveTo(mCX - ctHW, ctY2); ctx.lineTo(hx(0.11), yMain - 4); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(mCX + ctHW, ctY2); ctx.lineTo(hx(0.42), yMain - 4); ctx.stroke();
+  // ── HELICOPTER DECK (aft 78%–99%) ──
+  const hdX0 = hx(0.78), hdX1 = hx(0.992);
+  const hdW  = hdX1 - hdX0;
+  const hdY  = yMain;           // same deck level as main deck
+  const hdH  = 5;               // deck thickness (visible side)
 
-  // Boom (derrick)
-  const boomX = hx(0.13), boomY = yMain - freePx * 0.62;
-  ctx.beginPath(); ctx.moveTo(mCX - 1, mBaseY - freePx * 0.28); ctx.lineTo(boomX, boomY);
-  ctx.strokeStyle = 'rgba(130,112,84,0.65)'; ctx.lineWidth = 1.8; ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(mCX, mBaseY - freePx * 0.90); ctx.lineTo(boomX, boomY);
-  ctx.strokeStyle = 'rgba(80,68,44,0.22)'; ctx.lineWidth = 0.6; ctx.stroke();
+  // Helo deck surface — slightly different gray
+  ctx.fillStyle = 'rgba(118,122,130,0.88)';
+  ctx.fillRect(hdX0, hdY - hdH, hdW, hdH);
+  ctx.strokeStyle = 'rgba(70,75,82,0.30)'; ctx.lineWidth = 0.7;
+  ctx.strokeRect(hdX0, hdY - hdH, hdW, hdH);
 
-  // Nav light
-  ctx.beginPath(); ctx.arc(mCX, mTopY - 4, 3.5, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(240,236,220,0.80)'; ctx.fill();
+  // Faint H marking (circle + cross)
+  const hdMX = hdX0 + hdW * 0.50, hdMY = hdY - hdH * 0.5;
+  const hdR  = Math.min(hdW * 0.22, 14);
+  ctx.strokeStyle = 'rgba(200,202,208,0.30)'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.arc(hdMX, hdMY, hdR, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(hdMX - hdR * 0.55, hdMY - hdR * 0.55); ctx.lineTo(hdMX + hdR * 0.55, hdMY + hdR * 0.55); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(hdMX + hdR * 0.55, hdMY - hdR * 0.55); ctx.lineTo(hdMX - hdR * 0.55, hdMY + hdR * 0.55); ctx.stroke();
 
-  // ── STERN STAFF + FLAG ──
-  const stX    = hx(0.998);
+  // Hangar door at forward edge of helo deck
+  const hgW = hdW * 0.22, hgH = asH * 0.60;
+  ctx.fillStyle = 'rgba(105,110,118,0.88)';
+  ctx.fillRect(hdX0, yMain - hgH, hgW, hgH);
+  ctx.strokeStyle = 'rgba(65,70,78,0.35)'; ctx.lineWidth = 0.8;
+  ctx.strokeRect(hdX0, yMain - hgH, hgW, hgH);
+  // Door seam
+  ctx.beginPath(); ctx.moveTo(hdX0 + hgW * 0.50, yMain - hgH); ctx.lineTo(hdX0 + hgW * 0.50, yMain);
+  ctx.strokeStyle = 'rgba(55,60,68,0.30)'; ctx.lineWidth = 0.6; ctx.stroke();
+
+  // ── STERN STAFF + NAVY ENSIGN ──
+  const stX    = hx(0.997);
   const stBase = yStern + 1;
-  const stH    = freePx * 1.38;
+  const stH    = freePx * 1.32;
   ctx.beginPath(); ctx.moveTo(stX, stBase); ctx.lineTo(stX, stBase - stH);
-  ctx.strokeStyle = 'rgba(138,112,96,0.55)'; ctx.lineWidth = 1.4; ctx.stroke();
+  ctx.strokeStyle = 'rgba(130,134,140,0.58)'; ctx.lineWidth = 1.4; ctx.stroke();
 
-  // UK-style flag — slightly washed out like weathered fabric
-  const fW = hw * 0.060, fH = freePx * 0.48;
+  // Navy ensign (same code pattern as trawler flag)
+  const fW = hw * 0.058, fH = freePx * 0.46;
   const fX = stX - fW, fY = stBase - stH;
   ctx.save();
   ctx.beginPath(); ctx.rect(fX, fY, fW, fH); ctx.clip();
@@ -668,29 +719,6 @@ function drawBoat(res) {
   ctx.beginPath(); ctx.moveTo(fX, fY + fH / 2); ctx.lineTo(fX + fW, fY + fH / 2); ctx.stroke();
   ctx.restore();
 
-  // ── BOAT NAME ──
-  const nmSz = Math.max(8, Math.min(13, hw * 0.022));
-  ctx.font = `italic bold ${nmSz}px Georgia, serif`;
-  ctx.fillStyle = 'rgba(30,45,75,0.82)';
-  ctx.textAlign = 'center';
-  ctx.fillText('RC HullViz', hx(0.57), yMain + (WL - yMain) * 0.68);
-  ctx.textAlign = 'left';
-
-  // ── LIFE RING ──
-  const lrX = bdX0 - 11, lrY = whYm - wh2H * 0.5;
-  ctx.beginPath(); ctx.arc(lrX, lrY, 6, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(160,40,20,0.55)'; ctx.lineWidth = 3.5; ctx.stroke();
-  ctx.strokeStyle = 'rgba(230,220,205,0.40)'; ctx.lineWidth = 1.2; ctx.stroke();
-
-  // ── RADAR on bridge roof ──
-  const rdX = whX0 + (whX1 - whX0) * 0.62, rdY = whYt - 2;
-  ctx.fillStyle = 'rgba(185,176,158,0.70)'; rr(ctx, rdX - 4, rdY - 6, 8, 6, 1); ctx.fill();
-  ctx.strokeStyle = 'rgba(110,95,65,0.35)'; ctx.lineWidth = 0.8; ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(rdX, rdY - 6); ctx.lineTo(rdX, rdY - 14);
-  ctx.strokeStyle = 'rgba(90,82,62,0.45)'; ctx.lineWidth = 1.0; ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(rdX, rdY - 15, 7, 3.5, 0, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(195,185,162,0.65)'; ctx.fill(); ctx.strokeStyle = 'rgba(110,95,65,0.35)'; ctx.lineWidth = 0.8; ctx.stroke();
-
   // ── REFLECTION ──
   ctx.beginPath();
   ctx.moveTo(hx(0.005), WL);
@@ -698,7 +726,7 @@ function drawBoat(res) {
   ctx.lineTo(hx(1), WL + draftPx * 0.45);
   ctx.lineTo(hx(0.3), WL + draftPx * 0.35);
   ctx.lineTo(hx(0), WL);
-  ctx.fillStyle = 'rgba(232,224,208,0.06)'; ctx.fill();
+  ctx.fillStyle = 'rgba(215,225,235,0.05)'; ctx.fill();
 
   // ── WATERLINE DASHED ──
   ctx.setLineDash([5, 3]);
