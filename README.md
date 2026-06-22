@@ -157,13 +157,17 @@ The entire application is a single `index.html` file (~1 200 lines):
   ├─ S                  Global state (lang, L, B, rho, wHull, wBat, wMotor, wBallast)
   ├─ I18N               SK / EN translation objects
   ├─ compute()          Physics: V = W/ρ, T = V/(L·B), T_mm = T·10
+  ├─ setupCanvas(id)    Shared HiDPI canvas init (skip resize if unchanged, setTransform)
+  ├─ rr(ctx,…)          Cross-browser rounded-rect path helper
   ├─ drawBoat()         Canvas: detailed trawler silhouette with waterline
+  │   ├─ HULL           Palette object — all hull surface colours in one place
+  │   └─ stanchions()   Local helper for railing stanchion loops
   ├─ drawGraph()        Canvas: W/T curve with working point
   ├─ updateResults()    Result cards (T, V, W)
   ├─ readState()        Reads DOM values → state object S
   ├─ bindH() / bindV()  Sync horizontal / vertical slider ↔ number input
   ├─ applyLang()        Toggle all texts SK ↔ EN
-  └─ updateAll()        Main update dispatcher
+  └─ updateAll()        Compute + updateResults (immediate) + rAF-batched canvas redraw
 ```
 
 ---
@@ -185,6 +189,18 @@ The entire application is a single `index.html` file (~1 200 lines):
 ---
 
 ## 📝 Changelog
+
+### v2.2.0 — 2026-06-22
+- **Naturalistic boat visual** — all hard outlines replaced with semi-transparent `rgba()` strokes; hull, wheelhouse, rigging, life ring, radar and stern flag use graduated opacity instead of solid colours
+- **Hull palette** — `HULL` object centralises topsides and antifouling colours; boot-topping, reflection and all other fills use consistent `rgba()` syntax throughout
+- **Flag** — Union Jack opacity via inline `rgba(r,g,b,0.62)` on every stroke/fill; removed `globalAlpha` (stateful, save/restore-dependent)
+- **Bug fix** — windlass drum ellipse stroke restored (lost in softening pass)
+- **Bug fix** — fo'c'sle hatch edge stroke restored (5 px shape was invisible without it)
+- **Performance** — `updateAll()` batches canvas redraws in `requestAnimationFrame`; rapid slider input deduplicates to one paint per frame
+- **Performance** — porthole loop: `createRadialGradient` removed (was called 8× per frame); flat dark fill + highlight arc instead
+- **Performance** — `setupCanvas(id)`: skips `cv.width`/`cv.height` reset when size unchanged; `ctx.setTransform()` replaces compounding `ctx.scale()`
+- **Reuse** — `setupCanvas(id)` shared helper eliminates 5-line HiDPI boilerplate duplication between `drawBoat` and `drawGraph`
+- **Reuse** — `stanchions()` local helper replaces two structurally identical railing for-loops
 
 ### v2.1.0 — 2026-05-22
 - **Detailed fishing trawler silhouette** — fully rewritten `drawBoat()` with realistic geometry
