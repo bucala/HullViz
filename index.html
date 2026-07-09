@@ -41,8 +41,8 @@
     .wcol { display: flex; flex-direction: column; align-items: center; gap: 3px; user-select: none; -webkit-user-select: none; }
     .wcol-label { font-size: 0.68rem; font-weight: 600; color: #2a4a6a; text-align: center; line-height: 1.3; }
     .wcol-val { font-size: 0.76rem; color: #1565c0; font-weight: 700; }
-    .v-wrap { position: relative; width: 28px; height: 108px; }
-    .v-wrap input[type=range] { position: absolute; width: 108px; left: 50%; top: 50%; transform: translate(-50%,-50%) rotate(-90deg); transform-origin: center; accent-color: #1565c0; cursor: pointer; }
+    .v-wrap { position: relative; width: 28px; height: 108px; touch-action: none; }
+    .v-wrap input[type=range] { position: absolute; width: 108px; left: 50%; top: 50%; transform: translate(-50%,-50%) rotate(-90deg); transform-origin: center; accent-color: #1565c0; cursor: pointer; touch-action: none; }
     .v-num { width: 58px; font-size: 0.73rem; padding: 3px 5px; margin-top: 3px; }
 
     .info-icon { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; background: #e4f0ff; border: 1px solid #b0ccee; border-radius: 50%; font-size: 0.58rem; color: #1565c0; cursor: help; margin-left: 3px; position: relative; flex-shrink: 0; }
@@ -603,8 +603,16 @@ function drawBoat(res) {
   ctx.beginPath(); ctx.arc(fmX, fmTop - 6, 3, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(245,242,220,0.85)'; ctx.fill();
 
-  // ── FUNNEL at ~62% from bow — compact, modern, angled aft ──
-  const fnCX = hx(0.62), fnW = hw * 0.036;
+  // ── MID-SHIP CONNECTOR (low deck house between citadel and aft super) ──
+  const msX0 = ctX1 - 2, msX1 = hx(0.61);
+  const msH  = freePx * 0.28;
+  ctx.fillStyle = 'rgba(138,142,148,0.90)';
+  ctx.fillRect(msX0, yMain - msH, msX1 - msX0, msH);
+  ctx.strokeStyle = 'rgba(70,75,82,0.22)'; ctx.lineWidth = 0.7;
+  ctx.strokeRect(msX0, yMain - msH, msX1 - msX0, msH);
+
+  // ── FUNNEL at ~59% from bow — compact, modern, angled aft ──
+  const fnCX = hx(0.59), fnW = hw * 0.036;
   const fnH  = freePx * 0.55;
   const fnYb = yMain - 1;
   const fnYt = fnYb - fnH;
@@ -621,8 +629,8 @@ function drawBoat(res) {
   ctx.beginPath(); ctx.ellipse(fnCX + fnW * 0.08, fnYt, fnW * 0.42, 3, 0, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(22,20,18,0.90)'; ctx.fill();
 
-  // ── AFT SUPERSTRUCTURE (62%–76% from bow) ──
-  const asX0 = hx(0.64), asX1 = hx(0.76);
+  // ── AFT SUPERSTRUCTURE (61%–77% from bow) ──
+  const asX0 = hx(0.61), asX1 = hx(0.77);
   const asW  = asX1 - asX0;
   const asH  = freePx * 0.68;
   const asYb = yMain;
@@ -658,27 +666,28 @@ function drawBoat(res) {
   ctx.beginPath(); ctx.moveTo(amX - amArmW, amArmY); ctx.lineTo(amX - amArmW * 0.5, amTop + 2); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(amX + amArmW, amArmY); ctx.lineTo(amX + amArmW * 0.5, amTop + 2); ctx.stroke();
 
-  // ── HELICOPTER DECK (aft 78%–99%) ──
-  const hdX0 = hx(0.78), hdX1 = hx(0.992);
+  // ── HELICOPTER DECK (aft 77%–99%) ──
+  const hdX0 = hx(0.77), hdX1 = hx(0.992);
   const hdW  = hdX1 - hdX0;
   const hdY  = yMain;           // same deck level as main deck
   const hdH  = 5;               // deck thickness (visible side)
 
-  // Helo deck surface — slightly different gray
-  ctx.fillStyle = 'rgba(118,122,130,0.88)';
+  // Helo deck surface — slightly darker to distinguish from main deck
+  ctx.fillStyle = 'rgba(105,109,117,0.90)';
   ctx.fillRect(hdX0, hdY - hdH, hdW, hdH);
-  ctx.strokeStyle = 'rgba(70,75,82,0.30)'; ctx.lineWidth = 0.7;
+  ctx.strokeStyle = 'rgba(65,70,78,0.32)'; ctx.lineWidth = 0.7;
   ctx.strokeRect(hdX0, hdY - hdH, hdW, hdH);
 
-  // Faint H marking (circle + cross)
+  // Helipad circle + H marking
   const hdMX = hdX0 + hdW * 0.50, hdMY = hdY - hdH * 0.5;
   const hdR  = Math.min(hdW * 0.22, 14);
-  ctx.strokeStyle = 'rgba(200,202,208,0.30)'; ctx.lineWidth = 1.2;
+  ctx.strokeStyle = 'rgba(215,218,224,0.48)'; ctx.lineWidth = 1.3;
   ctx.beginPath(); ctx.arc(hdMX, hdMY, hdR, 0, Math.PI * 2); ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(hdMX - hdR * 0.55, hdMY - hdR * 0.55); ctx.lineTo(hdMX + hdR * 0.55, hdMY + hdR * 0.55); ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(hdMX + hdR * 0.55, hdMY - hdR * 0.55); ctx.lineTo(hdMX - hdR * 0.55, hdMY + hdR * 0.55); ctx.stroke();
+  const hdS = hdR * 0.58;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(hdMX - hdS, hdMY - hdS); ctx.lineTo(hdMX - hdS, hdMY + hdS); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(hdMX + hdS, hdMY - hdS); ctx.lineTo(hdMX + hdS, hdMY + hdS); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(hdMX - hdS, hdMY); ctx.lineTo(hdMX + hdS, hdMY); ctx.stroke();
 
   // Hangar door at forward edge of helo deck
   const hgW = hdW * 0.22, hgH = asH * 0.60;
@@ -885,6 +894,10 @@ window.addEventListener('DOMContentLoaded', () => {
   bindV('input-wBat',     'slider-wBat',     'disp-wBat');
   bindV('input-wMotor',   'slider-wMotor',   'disp-wMotor');
   bindV('input-wBallast', 'slider-wBallast', 'disp-wBallast');
+  // Prevent page scroll when dragging rotated vertical sliders on touch screens
+  ['slider-wHull','slider-wBat','slider-wMotor','slider-wBallast'].forEach(id => {
+    document.getElementById(id).addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+  });
   window.addEventListener('resize', updateAll);
   applyLang();
   readState();
